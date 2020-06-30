@@ -8,7 +8,7 @@ from iot_api.user_api.model import User
 from iot_api.user_api.models.data_collector_log_event import DataCollectorLogEvent
 from iot_api.user_api.models.data_collector import DataCollector
 
-from iot_api.user_api.endpoints import is_admin_user, is_regular_user
+from iot_api.user_api.Utils import is_admin_user, is_regular_user
 
 class DataCollectorLogEventListResource(Resource):
 
