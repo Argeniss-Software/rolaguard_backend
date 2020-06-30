@@ -7,7 +7,7 @@ log = iot_logging.getLogger(__name__)
 
 from iot_api.user_api.model import User
 from iot_api.user_api.Utils import is_system
-from iot_api.user_api.repository import Assets
+from iot_api.user_api.repository import InventoryAssets
 
 
 class AssetsList(Resource):
@@ -34,7 +34,7 @@ class AssetsList(Resource):
             page = request.args.get('page', default=1, type=int)
             size = request.args.get('size', default=20, type=int)
             
-            results = Assets.list_all(
+            results = InventoryAssets.list_all(
                 organization_id=organization_id,
                 page=page, size=size,
                 vendors=request.args.getlist('vendors[]'),
@@ -50,11 +50,18 @@ class AssetsList(Resource):
                 'name' : dev.name,
                 'data_collector' : dev.data_collector,
                 'vendor' : dev.vendor,
-                'application' : None,
+                'app_name' : dev.app_name,
+                'join_eui' : dev.join_eui,
+                'location' : {'latitude' : dev.location_latitude,
+                              'longitude': dev.location_longitude},
                 'tags' : []
             } for dev in results.items]
-            headers = {'total-pages': results.pages, 'total-items': results.total}
-            return {"devices": devices}, 200, headers
+            response = {
+                'assets' : devices,
+                'total_pages': results.pages,
+                'total_items': results.total
+            }
+            return response, 200
         except Exception as e:
             log.error(f"Error: {e}")
             return {"message" : "There was an error trying to list assets"}, 400
@@ -80,8 +87,8 @@ class AssetsPerVendorCount(Resource):
                 return abort(403, error='forbidden access')
             organization_id = user.organization_id
 
-            response = Assets.count_per_vendor(
-                organization_id,
+            response = InventoryAssets.count_per_vendor(
+                organization_id = organization_id,
                 vendors = request.args.getlist('vendors[]'),
                 gateway_ids = request.args.getlist('gateway_ids[]'),
                 data_collector_ids = request.args.getlist('data_collector_ids[]'),
@@ -114,8 +121,8 @@ class AssetsPerGatewayCount(Resource):
                 return abort(403, error='forbidden access')
             organization_id = user.organization_id
 
-            response = Assets.count_per_gateway(
-                organization_id,
+            response = InventoryAssets.count_per_gateway(
+                organization_id = organization_id,
                 vendors = request.args.getlist('vendors[]'),
                 gateway_ids = request.args.getlist('gateway_ids[]'),
                 data_collector_ids = request.args.getlist('data_collector_ids[]'),
@@ -149,8 +156,8 @@ class AssetsPerDatacollectorCount(Resource):
                 return abort(403, error='forbidden access')
             organization_id = user.organization_id
 
-            response = Assets.count_per_datacollector(
-                organization_id,
+            response = InventoryAssets.count_per_datacollector(
+                organization_id = organization_id,
                 vendors = request.args.getlist('vendors[]'),
                 gateway_ids = request.args.getlist('gateway_ids[]'),
                 data_collector_ids = request.args.getlist('data_collector_ids[]'),
@@ -184,8 +191,8 @@ class AssetsPerTagCount(Resource):
                 return abort(403, error='forbidden access')
             organization_id = user.organization_id
 
-            response = Assets.count_per_tag(
-                organization_id,
+            response = InventoryAssets.count_per_tag(
+                organization_id = organization_id,
                 vendors = request.args.getlist('vendors[]'),
                 gateway_ids = request.args.getlist('gateway_ids[]'),
                 data_collector_ids = request.args.getlist('data_collector_ids[]'),

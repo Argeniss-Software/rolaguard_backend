@@ -1,4 +1,3 @@
-import json
 from flask import request, abort, jsonify
 from flask_jwt_extended import get_jwt_identity
 from flask_restful import Resource
@@ -38,7 +37,11 @@ def list_all(organization_id, page=None, size=None,
     s1 = select([
         Device.dev_eui.label('id'),
         expression.literal_column('\'Device\'').label('type'),
+        Device.join_eui.label('join_eui'),
         Device.name,
+        expression.null().label('location_latitude'),
+        expression.null().label('location_longitude'),
+        Device.app_name,
         DataCollector.name.label('data_collector'),
         Device.vendor
         ]).\
@@ -49,7 +52,11 @@ def list_all(organization_id, page=None, size=None,
     s2 = select([
         Gateway.gw_hex_id.label('id'),
         expression.literal_column('\'Gateway\'').label('type'),
+        expression.null().label('join_eui'),
         Gateway.name,
+        Gateway.location_latitude,
+        Gateway.location_longitude,
+        expression.null().label('app_name'),
         DataCollector.name.label('data_collector'),
         Gateway.vendor
         ]).\
@@ -83,7 +90,7 @@ def list_all(organization_id, page=None, size=None,
     query = query.order_by(text('type desc'))
     query = query.alias('device_gateway')
     if page and size:
-        return db.session.query(query).paginate(page=page, per_page=size)
+        return db.session.query(query).paginate(page=page, per_page=size, error_out=False)
     else:
         return db.session.query(query)
 
