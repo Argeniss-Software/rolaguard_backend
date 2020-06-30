@@ -15,7 +15,7 @@ from iot_api.user_api.schemas.policy_schema import PolicySchema, UpdatedPolicySc
 
 from iot_api.user_api.events.policy_events import emit_policy_event
 
-from iot_api.user_api.endpoints import is_admin_user, is_regular_user
+from iot_api.user_api.Utils import is_admin_user, is_regular_user
 
 LOG = iot_logging.getLogger(__name__)
 
