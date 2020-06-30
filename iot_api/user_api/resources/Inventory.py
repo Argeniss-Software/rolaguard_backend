@@ -3,14 +3,14 @@ from flask_restful import Resource
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 import iot_logging
-LOG = iot_logging.getLogger(__name__)
+log = iot_logging.getLogger(__name__)
 
 from iot_api.user_api.model import User
 from iot_api.user_api.Utils import is_system
 from iot_api.user_api.repository import Assets
 
 
-class AssetsListAPI(Resource):
+class AssetsList(Resource):
     """ Endpoint to list assets (devices + gateways)
     Request parameters (all optional):
         - page: for pagination.
@@ -56,11 +56,11 @@ class AssetsListAPI(Resource):
             headers = {'total-pages': results.pages, 'total-items': results.total}
             return {"devices": devices}, 200, headers
         except Exception as e:
-            LOG.error(f"Error: {e}")
+            log.error(f"Error: {e}")
             return {"message" : "There was an error trying to list assets"}, 400
 
 
-class AssetsPerVendorCountAPI(Resource):
+class AssetsPerVendorCount(Resource):
     """ Endpoint to count assets (devices+gateways) grouped by vendor.
     Request parameters: 
         - vendors[]: for filtering, lists only assets that have ANY one of these vendors.
@@ -91,10 +91,10 @@ class AssetsPerVendorCountAPI(Resource):
 
             return response, 200
         except Exception as e:
-            LOG.error(f"Error: {e}")
+            log.error(f"Error: {e}")
             return {"message" : "There was an error trying to count assets"}, 400
 
-class AssetsPerGatewayCountAPI(Resource):
+class AssetsPerGatewayCount(Resource):
     """ Endpoint to count assets (devices+gateways) grouped by gateway.
     Request parameters: 
         - vendors[]: for filtering, lists only assets that have ANY one of these vendors.
@@ -125,11 +125,11 @@ class AssetsPerGatewayCountAPI(Resource):
 
             return response, 200
         except Exception as e:
-            LOG.error(f"Error: {e}")
+            log.error(f"Error: {e}")
             return {"message" : "There was an error trying to count assets"}, 400
             
 
-class AssetsPerDatacollectorCountAPI(Resource):
+class AssetsPerDatacollectorCount(Resource):
     """ Endpoint to count assets (devices+gateways) grouped per data-collector .
     Request parameters: 
         - vendors[]: for filtering, lists only assets that have ANY one of these vendors.
@@ -160,11 +160,11 @@ class AssetsPerDatacollectorCountAPI(Resource):
 
             return response, 200
         except Exception as e:
-            LOG.error(f"Error: {e}")
+            log.error(f"Error: {e}")
             return {"message" : "There was an error trying to count assets"}, 400
 
 
-class AssetsPerTagCountAPI(Resource):
+class AssetsPerTagCount(Resource):
     """ Endpoint to count assets (devices+gateways) grouped per tag.
     Request parameters: 
         - vendors[]: for filtering, lists only assets that have ANY one of these vendors.
@@ -195,6 +195,6 @@ class AssetsPerTagCountAPI(Resource):
             return response, 200
 
         except Exception as e:
-            LOG.error(f"Error: {e}")
+            log.error(f"Error: {e}")
             return {"message" : "There was an error trying to count assets"}, 400
 
