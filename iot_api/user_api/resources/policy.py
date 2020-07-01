@@ -6,10 +6,10 @@ import json
 import iot_logging
 from marshmallow import ValidationError
 
-from iot_api.user_api.models.policy import Policy
 from iot_api.user_api.model import User, AlertType
-from iot_api.user_api.models.data_collector import DataCollector
-from iot_api.user_api.models.policy_item import PolicyItem
+from iot_api.user_api.models.Policy import Policy
+from iot_api.user_api.models.DataCollector import DataCollector
+from iot_api.user_api.models.PolicyItem import PolicyItem
 
 from iot_api.user_api.schemas.policy_schema import PolicySchema, UpdatedPolicySchema
 
