@@ -7,10 +7,10 @@ log = iot_logging.getLogger(__name__)
 
 from iot_api.user_api.model import User
 from iot_api.user_api.Utils import is_system
-from iot_api.user_api.repository import InventoryAssets
+from iot_api.user_api.repository import AssetRepository
 
 
-class AssetsList(Resource):
+class AssetsListAPI(Resource):
     """ Endpoint to list assets (devices + gateways)
     Request parameters (all optional):
         - page: for pagination.
@@ -34,7 +34,7 @@ class AssetsList(Resource):
             page = request.args.get('page', default=1, type=int)
             size = request.args.get('size', default=20, type=int)
             
-            results = InventoryAssets.list_all(
+            results = AssetRepository.list_all(
                 organization_id=organization_id,
                 page=page, size=size,
                 vendors=request.args.getlist('vendors[]'),
@@ -67,7 +67,7 @@ class AssetsList(Resource):
             return {"message" : "There was an error trying to list assets"}, 400
 
 
-class AssetsPerVendorCount(Resource):
+class AssetsPerVendorCountAPI(Resource):
     """ Endpoint to count assets (devices+gateways) grouped by vendor.
     Request parameters: 
         - vendors[]: for filtering, lists only assets that have ANY one of these vendors.
@@ -87,7 +87,7 @@ class AssetsPerVendorCount(Resource):
                 return abort(403, error='forbidden access')
             organization_id = user.organization_id
 
-            response = InventoryAssets.count_per_vendor(
+            response = AssetRepository.count_per_vendor(
                 organization_id = organization_id,
                 vendors = request.args.getlist('vendors[]'),
                 gateway_ids = request.args.getlist('gateway_ids[]'),
@@ -101,7 +101,7 @@ class AssetsPerVendorCount(Resource):
             log.error(f"Error: {e}")
             return {"message" : "There was an error trying to count assets"}, 400
 
-class AssetsPerGatewayCount(Resource):
+class AssetsPerGatewayCountAPI(Resource):
     """ Endpoint to count assets (devices+gateways) grouped by gateway.
     Request parameters: 
         - vendors[]: for filtering, lists only assets that have ANY one of these vendors.
@@ -121,7 +121,7 @@ class AssetsPerGatewayCount(Resource):
                 return abort(403, error='forbidden access')
             organization_id = user.organization_id
 
-            response = InventoryAssets.count_per_gateway(
+            response = AssetRepository.count_per_gateway(
                 organization_id = organization_id,
                 vendors = request.args.getlist('vendors[]'),
                 gateway_ids = request.args.getlist('gateway_ids[]'),
@@ -136,7 +136,7 @@ class AssetsPerGatewayCount(Resource):
             return {"message" : "There was an error trying to count assets"}, 400
             
 
-class AssetsPerDatacollectorCount(Resource):
+class AssetsPerDatacollectorCountAPI(Resource):
     """ Endpoint to count assets (devices+gateways) grouped per data-collector .
     Request parameters: 
         - vendors[]: for filtering, lists only assets that have ANY one of these vendors.
@@ -156,7 +156,7 @@ class AssetsPerDatacollectorCount(Resource):
                 return abort(403, error='forbidden access')
             organization_id = user.organization_id
 
-            response = InventoryAssets.count_per_datacollector(
+            response = AssetRepository.count_per_datacollector(
                 organization_id = organization_id,
                 vendors = request.args.getlist('vendors[]'),
                 gateway_ids = request.args.getlist('gateway_ids[]'),
@@ -171,7 +171,7 @@ class AssetsPerDatacollectorCount(Resource):
             return {"message" : "There was an error trying to count assets"}, 400
 
 
-class AssetsPerTagCount(Resource):
+class AssetsPerTagCountAPI(Resource):
     """ Endpoint to count assets (devices+gateways) grouped per tag.
     Request parameters: 
         - vendors[]: for filtering, lists only assets that have ANY one of these vendors.
@@ -191,7 +191,7 @@ class AssetsPerTagCount(Resource):
                 return abort(403, error='forbidden access')
             organization_id = user.organization_id
 
-            response = InventoryAssets.count_per_tag(
+            response = AssetRepository.count_per_tag(
                 organization_id = organization_id,
                 vendors = request.args.getlist('vendors[]'),
                 gateway_ids = request.args.getlist('gateway_ids[]'),

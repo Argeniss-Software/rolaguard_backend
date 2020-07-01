@@ -13,7 +13,7 @@ from sqlalchemy.sql import select, expression, text
 from iot_api.user_api import db
 from iot_api.user_api.models import Tag, DeviceTag, GatewayTag
 from iot_api.user_api.model import Device, Gateway
-from iot_api.user_api.repository import Devices, Gateways
+from iot_api.user_api.repository import DeviceRepository, GatewayRepository
 
 
 def list_all(organization_id):

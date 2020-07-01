@@ -139,16 +139,16 @@ api.add_resource(endpoints.QuarantineRemoveManuallyAPI, '/api/v1.0/quarantined_d
 #endregion
 
 # Inventory
-api.add_resource(res.AssetsList, '/api/v1.0/inventory/list')
-api.add_resource(res.AssetsPerVendorCount, '/api/v1.0/inventory/count/vendor')
-api.add_resource(res.AssetsPerGatewayCount, '/api/v1.0/inventory/count/gateway')
-api.add_resource(res.AssetsPerDatacollectorCount, '/api/v1.0/inventory/count/data_collector')
-api.add_resource(res.AssetsPerTagCount, '/api/v1.0/inventory/count/tag')
+api.add_resource(res.AssetsListAPI, '/api/v1.0/inventory/list')
+api.add_resource(res.AssetsPerVendorCountAPI, '/api/v1.0/inventory/count/vendor')
+api.add_resource(res.AssetsPerGatewayCountAPI, '/api/v1.0/inventory/count/gateway')
+api.add_resource(res.AssetsPerDatacollectorCountAPI, '/api/v1.0/inventory/count/data_collector')
+api.add_resource(res.AssetsPerTagCountAPI, '/api/v1.0/inventory/count/tag')
 
 # Tags
-api.add_resource(res.TagList, '/api/v1.0/tags')
-api.add_resource(res.Tag, '/api/v1.0/tags/<int:tag_id>')
-api.add_resource(res.TagAssets, '/api/v1.0/tags/<int:tag_id>/assets')
+api.add_resource(res.TagListAPI, '/api/v1.0/tags')
+api.add_resource(res.TagAPI, '/api/v1.0/tags/<int:tag_id>')
+api.add_resource(res.TagAssetsAPI, '/api/v1.0/tags/<int:tag_id>/assets')
 
 
 if __name__ == '__main__':

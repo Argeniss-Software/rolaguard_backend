@@ -7,3 +7,4 @@ class Tag(db.Model):
     organization_id = Column(BigInteger, ForeignKey("organization.id"), nullable=False)
     name = Column(String(), nullable=False)
     color = Column(String(8), nullable=False)
+ 

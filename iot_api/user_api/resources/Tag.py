@@ -7,10 +7,10 @@ log = iot_logging.getLogger(__name__)
 
 from iot_api.user_api.model import User
 from iot_api.user_api.Utils import is_system
-from iot_api.user_api.repository import Tags
+from iot_api.user_api.repository import TagRepository
 
 
-class TagList(Resource):
+class TagListAPI(Resource):
     """
     Resource to list all tags (GET) and create new ones (with POST). When 
     creating a new tag, the name and color must be passed as parameters.
@@ -23,12 +23,14 @@ class TagList(Resource):
                 return abort(403, error='forbidden access')
             organization_id = user.organization_id
 
-            tags = Tags.list_all(organization_id=organization_id)
+            tag_list = TagRepository.list_all(
+                organization_id=organization_id
+                )
             return [{
                 "id" : tag.id,
                 "name" : tag.name,
                 "color": tag.color
-            } for tag in tags], 200
+            } for tag in tag_list], 200
         except Exception as e:
             log.error(f"Error: {e}")
             return {"message" : "There was an error trying to get a tag"}, 400
@@ -43,14 +45,18 @@ class TagList(Resource):
             
             name = request.args.get('name', type=str)
             color = request.args.get('color', type=str)
-            Tags.create(name=name, color=color, organization_id=organization_id)
+            TagRepository.create(
+                name=name,
+                color=color,
+                organization_id=organization_id
+                )
             return {"message": "Tag created"}, 200
         except Exception as e:
             log.error(f"Error: {e}")
             return {"message" : "There was an error trying to create a tag"}, 400
 
 
-class Tag(Resource):
+class TagAPI(Resource):
     """
     Resource to get (GET), update (PATCH) and delete (DELETE) an existing
     tag with the tag_id given in the url. When updating a tag, the new name
@@ -64,7 +70,10 @@ class Tag(Resource):
                 return abort(403, error='forbidden access')
             organization_id = user.organization_id
 
-            tag = Tags.get_with(tag_id=tag_id, organization_id=organization_id)
+            tag = TagRepository.get_with(
+                tag_id=tag_id,
+                organization_id=organization_id
+                )
             return {"id": tag.id, "name": tag.name, "color": tag.color}, 200
         except Exception as e:
             log.error(f"Error: {e}")
@@ -80,7 +89,7 @@ class Tag(Resource):
             
             name = request.args.get('name', type=str, default=None)
             color = request.args.get('color', type=str, default=None)
-            Tags.update(
+            TagRepository.update(
                 tag_id=tag_id,
                 name=name,
                 color=color,
@@ -98,7 +107,10 @@ class Tag(Resource):
                 return abort(403, error='forbidden access')
             organization_id = user.organization_id
 
-            Tags.delete(tag_id=tag_id, organization_id=organization_id)
+            TagRepository.delete(
+                tag_id=tag_id,
+                organization_id=organization_id
+                )
             return {"message": "Tag deleted"}, 200
         except Exception as e:
             log.error(f"Error: {e}")
@@ -106,7 +118,7 @@ class Tag(Resource):
 
 
 
-class TagAssets(Resource):
+class TagAssetsAPI(Resource):
     """
     Resource to tag (POST) and untag (DELETE) an asset. The tag_id is defined in
     the URL, and the asset_id and asset_type are given as parameters in the
@@ -122,7 +134,7 @@ class TagAssets(Resource):
 
             asset_id = request.args.get('asset_id', type=int)
             asset_type = request.args.get('asset_type', type=str)
-            Tags.tag_asset(
+            TagRepository.tag_asset(
                 tag_id=tag_id,
                 asset_id=asset_id,
                 asset_type=asset_type,
@@ -143,7 +155,7 @@ class TagAssets(Resource):
 
             asset_id = request.args.get('asset_id', type=int)
             asset_type = request.args.get('asset_type', type=str)
-            Tags.untag_asset(
+            TagRepository.untag_asset(
                 tag_id=tag_id,
                 asset_id=asset_id,
                 asset_type=asset_type,
