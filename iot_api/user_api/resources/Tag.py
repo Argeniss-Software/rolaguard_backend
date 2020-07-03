@@ -79,6 +79,7 @@ class TagAPI(Resource):
             log.error(f"Error: {e}")
             return {"message" : "There was an error trying to get a tag"}, 400
 
+
     @jwt_required
     def patch(self, tag_id):
         try:
