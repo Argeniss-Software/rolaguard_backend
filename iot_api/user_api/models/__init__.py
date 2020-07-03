@@ -13,5 +13,5 @@ from iot_api.user_api.models.Notification import Notification
 from iot_api.user_api.models.PolicyItem import PolicyItem
 from iot_api.user_api.models.Policy import Policy
 from iot_api.user_api.models.Tag import Tag
-from iot_api.user_api.models.DeviceTag import DeviceTag
-from iot_api.user_api.models.GatewayTag import GatewayTag
+from iot_api.user_api.models.DeviceToTag import DeviceToTag
+from iot_api.user_api.models.GatewayToTag import GatewayToTag
