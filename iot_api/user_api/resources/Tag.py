@@ -33,7 +33,7 @@ class TagListAPI(Resource):
             } for tag in tag_list], 200
         except Exception as e:
             log.error(f"Error: {e}")
-            return {"message" : "There was an error trying to get a tag"}, 400
+            return {"message" : "There was an error trying to get a tag"}, 500
 
     @jwt_required
     def post(self):
@@ -53,7 +53,7 @@ class TagListAPI(Resource):
             return {"message": "Tag created"}, 200
         except Exception as e:
             log.error(f"Error: {e}")
-            return {"message" : "There was an error trying to create a tag"}, 400
+            return {"message" : "There was an error trying to create a tag"}, 500
 
 
 class TagAPI(Resource):
@@ -77,7 +77,7 @@ class TagAPI(Resource):
             return {"id": tag.id, "name": tag.name, "color": tag.color}, 200
         except Exception as e:
             log.error(f"Error: {e}")
-            return {"message" : "There was an error trying to get a tag"}, 400
+            return {"message" : "There was an error trying to get a tag"}, 500
 
 
     @jwt_required
@@ -98,7 +98,7 @@ class TagAPI(Resource):
             return {"message": "Tag updated"}, 200
         except Exception as e:
             log.error(f"Error: {e}")
-            return {"message" : "There was an error trying to create a tag"}, 400
+            return {"message" : "There was an error trying to create a tag"}, 500
 
     @jwt_required
     def delete(self, tag_id):
@@ -115,7 +115,7 @@ class TagAPI(Resource):
             return {"message": "Tag deleted"}, 200
         except Exception as e:
             log.error(f"Error: {e}")
-            return {"message" : "There was an error trying to delete a tag"}, 400
+            return {"message" : "There was an error trying to delete a tag"}, 500
 
 
 
@@ -144,7 +144,7 @@ class TagAssetsAPI(Resource):
             return {"message": "Asset tagged"}, 200
         except Exception as e:
             log.error(f"Error: {e}")
-            return {"message" : "There was an error trying to tag assets"}, 400
+            return {"message" : "There was an error trying to tag assets"}, 500
 
     @jwt_required
     def delete(self, tag_id):
@@ -165,4 +165,4 @@ class TagAssetsAPI(Resource):
             return {"message": "Asset untagged"}, 200
         except Exception as e:
             log.error(f"Error: {e}")
-            return {"message" : "There was an error trying to untag assets"}, 400
+            return {"message" : "There was an error trying to untag assets"}, 500
