@@ -5,7 +5,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from iot_api.user_api.model import User
 from iot_api.user_api.Utils import is_system
 from iot_api.user_api.repository import TagRepository
-from iot_api.user_api import Exceptions
+from iot_api.user_api import Error
 
 
 class TagListAPI(Resource):
@@ -17,7 +17,7 @@ class TagListAPI(Resource):
     def get(self):
         user = User.find_by_username(get_jwt_identity())
         if not user or is_system(user.id):
-            raise Exceptions.Forbidden("User not allowed")
+            raise Error.Forbidden("User not allowed")
         organization_id = user.organization_id
 
         tag_list = TagRepository.list_all(
@@ -33,7 +33,7 @@ class TagListAPI(Resource):
     def post(self):
         user = User.find_by_username(get_jwt_identity())
         if not user or is_system(user.id):
-            raise Exceptions.Forbidden("User not allowed")
+            raise Error.Forbidden("User not allowed")
         organization_id = user.organization_id
         
         name = request.args.get('name', type=str)
@@ -56,7 +56,7 @@ class TagAPI(Resource):
     def get(self, tag_id):
         user = User.find_by_username(get_jwt_identity())
         if not user or is_system(user.id):
-            raise Exceptions.Forbidden("User not allowed")
+            raise Error.Forbidden("User not allowed")
         organization_id = user.organization_id
 
         tag = TagRepository.get_with(
@@ -70,7 +70,7 @@ class TagAPI(Resource):
     def patch(self, tag_id):
         user = User.find_by_username(get_jwt_identity())
         if not user or is_system(user.id):
-            raise Exceptions.Forbidden("User not allowed")
+            raise Error.Forbidden("User not allowed")
         organization_id = user.organization_id
         
         name = request.args.get('name', type=str, default=None)
@@ -86,7 +86,7 @@ class TagAPI(Resource):
     def delete(self, tag_id):
         user = User.find_by_username(get_jwt_identity())
         if not user or is_system(user.id):
-            raise Exceptions.Forbidden("User not allowed")
+            raise Error.Forbidden("User not allowed")
         organization_id = user.organization_id
 
         TagRepository.delete(
@@ -107,7 +107,7 @@ class TagAssetsAPI(Resource):
     def post(self, tag_id):
         user = User.find_by_username(get_jwt_identity())
         if not user or is_system(user.id):
-            raise Exceptions.Forbidden("User not allowed")
+            raise Error.Forbidden("User not allowed")
         organization_id = user.organization_id
 
         asset_id = request.args.get('asset_id', type=int)
@@ -124,7 +124,7 @@ class TagAssetsAPI(Resource):
     def delete(self, tag_id):
         user = User.find_by_username(get_jwt_identity())
         if not user or is_system(user.id):
-            raise Exceptions.Forbidden("User not allowed")
+            raise Error.Forbidden("User not allowed")
         organization_id = user.organization_id
 
         asset_id = request.args.get('asset_id', type=int)
