@@ -33,7 +33,7 @@ def get_with(tag_id, organization_id):
     """
     tag = db.session.query(Tag).filter(Tag.id==tag_id, Tag.organization_id==organization_id).first()
     if not tag:
-        raise Error.NotFound(f"The tag {tag_id} with organization {organization_id} was not found")
+        raise Error.UnprocessableEntity(f"The tag {tag_id} with organization {organization_id} was not found")
     return tag
 
 def update(tag_id, name, color, organization_id):
