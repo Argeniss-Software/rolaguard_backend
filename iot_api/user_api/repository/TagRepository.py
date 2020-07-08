@@ -19,11 +19,13 @@ def list_all(organization_id):
 
 def create(name, color, organization_id): 
     """
-    Create a new tag with the given name, color and organization_id.
+    Create a new tag with the given name, color and organization_id, returns the
+    id of the new tag.
     """
     tag = Tag(name=name, color=color, organization_id=organization_id)
     db.session.add(tag)
     db.session.commit()
+    return tag.id
 
 def get_with(tag_id, organization_id):
     """

@@ -45,12 +45,12 @@ class TagListAPI(Resource):
             
             name = request.args.get('name', type=str)
             color = request.args.get('color', type=str)
-            TagRepository.create(
+            new_tag_id = TagRepository.create(
                 name=name,
                 color=color,
                 organization_id=organization_id
                 )
-            return {"message": "Tag created"}, 200
+            return {"message": "Tag created", "tag_id" : new_tag_id}, 200
         except Exception as e:
             log.error(f"Error: {e}")
             return {"message" : "There was an error trying to create a tag"}, 500
