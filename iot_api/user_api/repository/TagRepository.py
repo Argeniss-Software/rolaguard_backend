@@ -72,13 +72,15 @@ def tag_asset(tag_id, asset_id, asset_type, organization_id):
     """
     if not is_from_organization(tag_id, organization_id):
         raise Exception("Trying to use a tag from other organization.")
-    if not DeviceRepository.is_from_organization(asset_id, organization_id):
-        raise Exception("Trying to tag an asset from other organization")
 
     if asset_type=="device":
+        if not DeviceRepository.is_from_organization(asset_id, organization_id):
+            raise Exception("Trying to tag an device from other organization")
         asset_tag = DeviceToTag(tag_id=tag_id, device_id=asset_id)
         db.session.add(asset_tag)
     elif asset_type=="gateway":
+        if not GatewayRepository.is_from_organization(asset_id, organization_id):
+            raise Exception("Trying to tag a gateway from other organization")
         asset_tag = GatewayToTag(tag_id=tag_id, gateway_id=asset_id)
         db.session.add(asset_tag)
     else:
@@ -93,14 +95,16 @@ def untag_asset(tag_id, asset_id, asset_type, organization_id):
     """
     if not is_from_organization(tag_id, organization_id):
         raise Exception("Trying to delete a tag from other organization.")
-    if not DeviceRepository.is_from_organization(asset_id, organization_id):
-        raise Exception("Trying to tag an asset from other organization")
 
     if asset_type=="device":
+        if not DeviceRepository.is_from_organization(asset_id, organization_id):
+            raise Exception("Trying to untag a device from other organization")
         asset_tag = DeviceToTag(tag_id=tag_id, device_id=asset_id)
         asset_tag = db.session.query(DeviceToTag).filter(Tag.id==tag_id, Device.id==asset_id).first()
         db.session.delete(asset_tag)
     elif asset_type=="gateway":
+        if not GatewayRepository.is_from_organization(asset_id, organization_id):
+            raise Exception("Trying to untag a gatewa from other organization")
         asset_tag = GatewayToTag(tag_id=tag_id, gateway_id=asset_id)
         asset_tag = db.session.query(GatewayToTag).filter(Tag.id==tag_id, Gateway.id==asset_id).first()
         db.session.delete(asset_tag)
