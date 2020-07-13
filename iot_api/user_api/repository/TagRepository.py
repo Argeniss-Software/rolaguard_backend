@@ -75,7 +75,7 @@ def tag_asset(tag_id, asset_id, asset_type, organization_id):
 
     if asset_type=="device":
         if not DeviceRepository.is_from_organization(asset_id, organization_id):
-            raise Exception("Trying to tag an device from other organization")
+            raise Exception("Trying to tag a device from other organization")
         asset_tag = DeviceToTag(tag_id=tag_id, device_id=asset_id)
         db.session.add(asset_tag)
     elif asset_type=="gateway":
