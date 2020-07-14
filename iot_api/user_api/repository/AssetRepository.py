@@ -30,7 +30,8 @@ def list_all(organization_id, page=None, size=None,
     """
     # Build two queries, one for devices and one for gateways
     s1 = select([
-        Device.dev_eui.label('id'),
+        Device.id.label('id'),
+        Device.dev_eui.label('hex_id'),
         expression.literal_column('\'Device\'').label('type'),
         Device.join_eui.label('join_eui'),
         Device.name,
@@ -45,7 +46,8 @@ def list_all(organization_id, page=None, size=None,
             where(DataCollector.id==DataCollectorToDevice.data_collector_id).\
             where(GatewayToDevice.device_id==Device.id)
     s2 = select([
-        Gateway.gw_hex_id.label('id'),
+        Gateway.id.label('id'),
+        Gateway.gw_hex_id.label('hex_id'),
         expression.literal_column('\'Gateway\'').label('type'),
         expression.null().label('join_eui'),
         Gateway.name,

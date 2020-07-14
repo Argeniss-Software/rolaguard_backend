@@ -46,6 +46,7 @@ class AssetsListAPI(Resource):
 
             devices = [{
                 'id' : dev.id,
+                'hex_id' : dev.hex_id,
                 'type' : dev.type,
                 'name' : dev.name,
                 'data_collector' : dev.data_collector,
