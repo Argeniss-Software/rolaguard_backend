@@ -7,7 +7,7 @@ log = iot_logging.getLogger(__name__)
 
 from iot_api.user_api.model import User
 from iot_api.user_api.Utils import is_system
-from iot_api.user_api.repository import AssetRepository
+from iot_api.user_api.repository import AssetRepository, TagRepository
 
 
 class AssetsListAPI(Resource):
@@ -40,7 +40,7 @@ class AssetsListAPI(Resource):
                 vendors=request.args.getlist('vendors[]'),
                 gateway_ids=request.args.getlist('gateway_ids[]'),
                 data_collector_ids=request.args.getlist('data_collector_ids[]'),
-                tag_ids=request.args.getlist('data_collector_ids[]'),
+                tag_ids=request.args.getlist('tags_ids[]'),
                 asset_type=request.args.get('asset_type', type=str)
             )
 
@@ -55,7 +55,10 @@ class AssetsListAPI(Resource):
                 'join_eui' : dev.join_eui,
                 'location' : {'latitude' : dev.location_latitude,
                               'longitude': dev.location_longitude},
-                'tags' : []
+                'tags' : [{"id" : tag.id,
+                            "name" : tag.name,
+                            "color" : tag.color}
+                            for tag in TagRepository.list_asset_tags(dev.id, dev.type.lower(), organization_id)]
             } for dev in results.items]
             response = {
                 'assets' : devices,
