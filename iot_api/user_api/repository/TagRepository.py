@@ -99,12 +99,16 @@ def untag_asset(tag_id, asset_id, asset_type, organization_id):
     if asset_type=="device":
         if not DeviceRepository.is_from_organization(asset_id, organization_id):
             raise Exception("Trying to untag a device from other organization")
-        asset_tag = db.session.query(DeviceToTag).filter(Tag.id==tag_id, Device.id==asset_id).first()
+        asset_tag = db.session.query(DeviceToTag).\
+            join(Tag).\
+            filter(Tag.id==tag_id, Device.id==asset_id).first()
         db.session.delete(asset_tag)
     elif asset_type=="gateway":
         if not GatewayRepository.is_from_organization(asset_id, organization_id):
             raise Exception("Trying to untag a gateway from other organization")
-        asset_tag = db.session.query(GatewayToTag).filter(Tag.id==tag_id, Gateway.id==asset_id).first()
+        asset_tag = db.session.query(GatewayToTag).\
+            join(Tag).\
+            filter(Tag.id==tag_id, Gateway.id==asset_id).first()
         db.session.delete(asset_tag)
     else:
         raise Exception(f"Invalid asset_type: {asset_type}")
@@ -114,10 +118,14 @@ def list_asset_tags(asset_id, asset_type, organization_id):
     if asset_type=="device":
         if not DeviceRepository.is_from_organization(asset_id, organization_id):
             raise Exception("Trying to list tags from a device from other organization")
-        return db.session.query(Tag).filter(DeviceToTag.device_id == asset_id).all()
+        return db.session.query(Tag).\
+            join(DeviceToTag).\
+            filter(DeviceToTag.device_id == asset_id).all()
     elif asset_type=="gateway":
         if not GatewayRepository.is_from_organization(asset_id, organization_id):
             raise Exception("Trying to list tags from a gateway from other organization")
-        return db.session.query(Tag).filter(GatewayToTag.gateway_id == asset_id).all()
+        return db.session.query(Tag).\
+            join(GatewayToTag).\
+            filter(GatewayToTag.gateway_id == asset_id).all()
     else:
         raise Exception(f"Invalid asset_type: {asset_type}")
