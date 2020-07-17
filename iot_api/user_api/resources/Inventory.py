@@ -40,7 +40,7 @@ class AssetsListAPI(Resource):
                 vendors=request.args.getlist('vendors[]'),
                 gateway_ids=request.args.getlist('gateway_ids[]'),
                 data_collector_ids=request.args.getlist('data_collector_ids[]'),
-                tag_ids=request.args.getlist('tags_ids[]'),
+                tag_ids=request.args.getlist('tag_ids[]'),
                 asset_type=request.args.get('asset_type', type=str)
             )
 

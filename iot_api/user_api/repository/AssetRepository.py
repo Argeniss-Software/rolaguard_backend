@@ -8,7 +8,7 @@ from iot_api.user_api import db
 from iot_api.user_api.model import User
 from iot_api.user_api.Utils import is_admin_user, is_regular_user
 from iot_api.user_api.model import Device, Gateway, DataCollectorToDevice, GatewayToDevice
-from iot_api.user_api.models import DataCollector
+from iot_api.user_api.models import DataCollector, DeviceToTag, GatewayToTag
 from collections import defaultdict
 
 
@@ -40,11 +40,7 @@ def list_all(organization_id, page=None, size=None,
         Device.app_name,
         DataCollector.name.label('data_collector'),
         Device.vendor
-        ]).\
-            where(Device.organization_id==organization_id).\
-            where(Device.id==DataCollectorToDevice.device_id).\
-            where(DataCollector.id==DataCollectorToDevice.data_collector_id).\
-            where(GatewayToDevice.device_id==Device.id)
+        ]).where(Device.organization_id==organization_id)
     s2 = select([
         Gateway.id.label('id'),
         Gateway.gw_hex_id.label('hex_id'),
@@ -56,9 +52,7 @@ def list_all(organization_id, page=None, size=None,
         expression.null().label('app_name'),
         DataCollector.name.label('data_collector'),
         Gateway.vendor
-        ]).\
-            where(Gateway.organization_id == organization_id).\
-            where(Gateway.data_collector_id == DataCollector.id)
+        ]).where(Gateway.organization_id == organization_id)
 
     # If filter parameters were given, add the respective where clauses to the queries
     if vendors:
@@ -68,10 +62,23 @@ def list_all(organization_id, page=None, size=None,
         s1 = s1.where(GatewayToDevice.gateway_id.in_(gateway_ids))
         s2 = s2.where(Gateway.id.in_(gateway_ids))
     if data_collector_ids:
-        s1 = s1.where(DataCollector.id.in_(data_collector_ids))
-        s2 = s2.where(DataCollector.id.in_(data_collector_ids))
+        s1 = s1.where(DataCollectorToDevice.id.in_(data_collector_ids))
+        s2 = s2.where(Gateway.data_collector_id.in_(data_collector_ids))
     if tag_ids:
-        pass # TODO: implement AND tag filtering
+        # Build subqueries to get the ids of the assets that have all the tags
+        sq1 = db.session.query(distinct(Device.id)).\
+                join(DeviceToTag).\
+                filter(DeviceToTag.tag_id.in_(tag_ids)).\
+                group_by(Device.id).\
+                having(func.count(DeviceToTag.tag_id) == len(tag_ids))
+        sq2 = db.session.query(distinct(Gateway.id)).\
+                join(GatewayToTag).\
+                filter(GatewayToTag.tag_id.in_(tag_ids)).\
+                group_by(Gateway.id).\
+                having(func.count(GatewayToTag.tag_id) == len(tag_ids))
+        # Use these subqueries to filter the main queries.
+        s1 = s1.where(Device.id.in_(sq1))
+        s2 = s2.where(Gateway.id.in_(sq2))
 
     # Filter by device type if the parameter was given, else, make a union with queries.
     query = s1.union(s2)
