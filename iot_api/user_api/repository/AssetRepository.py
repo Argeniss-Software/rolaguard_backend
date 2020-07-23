@@ -13,6 +13,22 @@ from iot_api.user_api import Error
 from collections import defaultdict
 
 
+def get_with(asset_id, asset_type):
+    if asset_type=="device":
+        asset = db.session.query(Device).\
+            filter(Device.id == asset_id).\
+            first()
+    elif asset_type=="gateway":
+        asset = db.session.query(Gateway).\
+            filter(Gateway.id == asset_id).\
+            first()
+    else:
+        raise Exception(f"Invalid asset_type: {asset_type}")
+    if not asset:
+        raise Exception(f"Asset with id {asset_id} and type {asset_type} not found")
+    return asset
+
+
 def list_all(organization_id, page=None, size=None,
              vendors=None, gateway_ids=None, data_collector_ids=None,
              tag_ids=None, asset_type=None):
