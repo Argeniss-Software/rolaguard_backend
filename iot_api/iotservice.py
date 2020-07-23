@@ -20,9 +20,7 @@ from iot_api.user_api.resources.data_collector_log_event import DataCollectorLog
 from iot_api.user_api.resources.data_collector import DataCollectorActivityResource
 from iot_api.user_api.resources.notification_preferences import NotificationPreferencesResource, NotificationEmailActivationResource, NotificationPhoneActivationResource
 from iot_api.user_api.resources.notification import NotificationListResource, NotificationCountResource, NotificationResource
-from iot_api.user_api.model import User, Organization, Gateway, Device, RevokedTokenModel, AccountActivation, \
-    PasswordReset, LoginAttempts, UserRole, UserToUserRole, ChangeEmailRequests, Alert, Packet
-#from iot_api.user_api.enums import WebUrl
+from iot_api.user_api.model import RevokedTokenModel
 
 import simplejson as json
 from pprint import pprint
@@ -30,12 +28,6 @@ from psycopg2 import sql
 import psycopg2 as postgresql
 
 from datetime import datetime
-# import logging
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-from shapely.geometry import Point
-from shapely.geometry.polygon import Polygon
 
 import iot_api.user_api.websocket
 import iot_api.user_api.events
@@ -153,6 +145,4 @@ api.add_resource(res.TagAssetsAPI, '/api/v1.0/tags/<int:tag_id>/assets')
 
 if __name__ == '__main__':
     socketio.run(app, port=5000)
-#    socketio.run(app)
     db.init_app(app)
-    # app.run(debug=app.config['DEBUG'])
