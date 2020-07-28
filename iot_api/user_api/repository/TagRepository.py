@@ -65,6 +65,19 @@ def is_from_organization(tag_id, organization_id):
         Tag.organization_id == organization_id
     ).exists()).scalar()
 
+def is_tagged(tag_id, asset_id, asset_type):
+    if asset_type=="device":
+        return db.session.query(DeviceToTag.query.\
+            filter(DeviceToTag.tag_id == tag_id).\
+            filter(DeviceToTag.device_id == asset_id).exists()).scalar()
+    elif asset_type=="gateway":
+        return db.session.query(GatewayToTag.query.\
+            filter(GatewayToTag.tag_id == tag_id).\
+            filter(GatewayToTag.gateway_id == asset_id).exists()).scalar()
+    else:
+        raise Exception(f"Invalid asset_type: {asset_type}")
+
+
 def tag_asset(tag_id, asset_id, asset_type, organization_id):
     """
     Tag the asset with the given asset_type ("device" or "gateway") and asset_id
@@ -72,6 +85,8 @@ def tag_asset(tag_id, asset_id, asset_type, organization_id):
     """
     if not is_from_organization(tag_id, organization_id):
         raise Exception("Trying to use a tag from other organization.")
+    if is_tagged(tag_id=tag_id, asset_id=asset_id, asset_type=asset_type):
+        return
 
     if asset_type=="device":
         if not DeviceRepository.is_from_organization(asset_id, organization_id):
