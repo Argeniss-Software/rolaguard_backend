@@ -1,5 +1,6 @@
 import traceback
 from iot_api import app
+from iot_api.user_api import db
 import werkzeug
 
 import iot_logging
@@ -58,6 +59,9 @@ def handle_422(error):
 # handler, i.e the exceptions raised by Flask and the internal errors.
 @app.errorhandler(Exception)
 def handle_error(error):
+    # Just in case, a rollback is triggered in the database for any error
+    db.session.rollback()
+    # Re-route the error according to its type
     if isinstance(error, werkzeug.exceptions.BadRequest):
         return handle_400(BadRequest(error))
     elif isinstance(error, werkzeug.exceptions.Unauthorized):
