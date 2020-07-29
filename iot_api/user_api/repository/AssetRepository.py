@@ -55,7 +55,8 @@ def list_all(organization_id, page=None, size=None,
         expression.null().label('location_longitude'),
         Device.app_name,
         DataCollector.name.label('data_collector'),
-        Device.vendor
+        Device.vendor,
+        Device.importance
         ]).\
             where(Device.organization_id==organization_id).\
             where(Device.id==DataCollectorToDevice.device_id).\
@@ -70,7 +71,8 @@ def list_all(organization_id, page=None, size=None,
         Gateway.location_longitude,
         expression.null().label('app_name'),
         DataCollector.name.label('data_collector'),
-        Gateway.vendor
+        Gateway.vendor,
+        Gateway.importance
         ]).\
             where(Gateway.organization_id == organization_id).\
             where(Gateway.data_collector_id == DataCollector.id)
