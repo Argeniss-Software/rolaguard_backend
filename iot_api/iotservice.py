@@ -1,5 +1,3 @@
-# iotservice
-
 # -*- coding: utf-8 -*-
 """
     IoT API
@@ -156,6 +154,4 @@ api.add_resource(res.TagAssetsAPI, '/api/v1.0/tags/<int:tag_id>/assets')
 
 if __name__ == '__main__':
     socketio.run(app, port=5000)
-#    socketio.run(app)
     db.init_app(app)
-    # app.run(debug=app.config['DEBUG'])
