@@ -18,7 +18,6 @@ from iot_api import mail, socketio
 from iot_api.user_api.resources.policy import PolicyResource, PolicyListResource
 from iot_api.user_api.resources.data_collector_log_event import DataCollectorLogEventListResource
 from iot_api.user_api.resources.data_collector import DataCollectorActivityResource
-from iot_api.user_api.resources.notification_preferences import NotificationPreferencesResource, NotificationEmailActivationResource, NotificationPhoneActivationResource
 from iot_api.user_api.resources.notification import NotificationListResource, NotificationCountResource, NotificationResource
 from iot_api.user_api.model import User, Organization, Gateway, Device, RevokedTokenModel, AccountActivation, \
     PasswordReset, LoginAttempts, UserRole, UserToUserRole, ChangeEmailRequests, Alert, Packet
@@ -119,9 +118,9 @@ api.add_resource(DataCollectorLogEventListResource, '/api/v1.0/data_collectors/<
 #endregion
 
 #region Notifications
-api.add_resource(NotificationPreferencesResource, '/api/v1.0/notifications/preferences')
-api.add_resource(NotificationEmailActivationResource, '/api/v1.0/notifications/email_activation/<path:token>')
-api.add_resource(NotificationPhoneActivationResource, '/api/v1.0/notifications/phone_activation/<path:token>')
+api.add_resource(res.NotificationPreferencesAPI, '/api/v1.0/notifications/preferences')
+api.add_resource(res.NotificationEmailActivationAPI, '/api/v1.0/notifications/email_activation/<path:token>')
+api.add_resource(res.NotificationPhoneActivationAPI, '/api/v1.0/notifications/phone_activation/<path:token>')
 api.add_resource(NotificationListResource, '/api/v1.0/notifications')
 api.add_resource(NotificationResource, '/api/v1.0/notifications/<int:id>')
 api.add_resource(NotificationCountResource, '/api/v1.0/notifications/count')

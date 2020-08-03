@@ -11,18 +11,18 @@ import iot_logging
 
 from threading import Thread
 from datetime import datetime, timedelta
-from marshmallow import ValidationError
 from urllib.parse import quote_plus
 
 from iot_api import bcrypt, mail, app
 from iot_api.user_api.model import User
 #from iot_api.user_api.enums import WebUrl
-from iot_api.user_api.models.NotificationPreferences import NotificationPreferences
-from iot_api.user_api.models.NotificationAlertSettings import NotificationAlertSettings
-from iot_api.user_api.models.NotificationDataCollectorSettings import NotificationDataCollectorSettings
-from iot_api.user_api.models.NotificationAdditionalEmail import NotificationAdditionalEmail
-from iot_api.user_api.models.NotificationAdditionalTelephoneNumber import NotificationAdditionalTelephoneNumber
-from iot_api.user_api.models.DataCollector import DataCollector
+from iot_api.user_api.models import (
+    NotificationPreferences, NotificationAlertSettings,
+    NotificationDataCollectorSettings, NotificationAdditionalEmail,
+    NotificationAdditionalTelephoneNumber, DataCollector,
+    NotificationAssetImportance
+)
+from iot_api.user_api import Error
 
 from iot_api.user_api.schemas.notification_preferences_schema import NotificationPreferencesSchema
 
@@ -36,18 +36,17 @@ from email.mime.text import MIMEText
 
 LOG = iot_logging.getLogger(__name__)
 
-class NotificationPreferencesResource(Resource):
+class NotificationPreferencesAPI(Resource):
 
     @jwt_required
     def get(self):
         user_identity = get_jwt_identity()
         user = User.find_by_username(user_identity)
-
-        if not user:
-            return None, 403
+        if not user: raise Error.Forbidden()
 
         preferences = NotificationPreferences.find_one(user.id)
         alert_settings = NotificationAlertSettings.find_one(user.id)
+        asset_importance = NotificationAssetImportance.get_with(user.id)
         dc_settings = NotificationDataCollectorSettings.find(user.id)
         emails = NotificationAdditionalEmail.find(user.id)
         phones = NotificationAdditionalTelephoneNumber.find(user.id)
@@ -61,37 +60,23 @@ class NotificationPreferencesResource(Resource):
         response = {
             'destinations': preferences,
             'risks': alert_settings,
+            'asset_importance': {
+                'high' : asset_importance.high,
+                'medium' : asset_importance.medium,
+                'low' : asset_importance.low,
+            },
             'dataCollectors': dc_settings
         }
-
         return response, 200
 
     @jwt_required
     def put(self):
-
         user_identity = get_jwt_identity()
         user = User.find_by_username(user_identity)
-
-        if not user:
-            return None, 403
+        if not user: raise Error.Forbidden()
 
         body = json.loads(request.data)
-
-        try:
-            parsed_result = NotificationPreferencesSchema().load(body)
-        except ValidationError as err:
-            LOG.error('Error parsing body: {0}'.format(err))
-            return err.messages, 400
-
-        if len(parsed_result.errors.keys()) > 0:
-            errors = []
-            for key in parsed_result.errors.keys():
-
-                errors.append(parsed_result.errors.get(key))
-            LOG.error('Error parsing body: {0}'.format(errors))
-            return errors , 400
-        
-        parsed_result = parsed_result.data
+        parsed_result = NotificationPreferencesSchema().load(body).data
         
         global activation_emails, activation_sms
         activation_emails = []
@@ -179,6 +164,15 @@ class NotificationPreferencesResource(Resource):
                     return {'error': 'Risk must be one these: high, medium, low, info'}, 400
                 setattr(nas, attr, risk.get('enabled'))
 
+            # Update asset importances
+            nas = NotificationAssetImportance.get_with(user_id = user.id)  
+            for pair in parsed_result['asset_importance']:
+                if attr not in ('high', 'medium', 'low', 'info'):
+                    NotificationPreferences.rollback()
+                    LOG.error('Risk must be one these: high, medium, low, info. But it\'s: {0}'.format(attr))
+                    return {'error': 'Risk must be one these: high, medium, low, info'}, 400
+                setattr(nas, attr, risk.get('enabled'))
+
             # Update data collectors. Check if dc belongs to user organization
             data_collectors = parsed_result.get('data_collectors')
             for dcp in data_collectors:
@@ -207,7 +201,7 @@ class NotificationPreferencesResource(Resource):
             return {'error': 'Something went wrong'}, 500
 
 
-class NotificationEmailActivationResource(Resource):
+class NotificationEmailActivationAPI(Resource):
 
     def put(self, token):
         email = NotificationAdditionalEmail.find_one_by_token(token)
@@ -226,7 +220,7 @@ class NotificationEmailActivationResource(Resource):
         return {'email': email.email}, 200
 
 
-class NotificationPhoneActivationResource(Resource):
+class NotificationPhoneActivationAPI(Resource):
 
     def put(self, token):
         phone = NotificationAdditionalTelephoneNumber.find_one_by_token(token)
