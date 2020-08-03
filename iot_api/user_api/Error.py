@@ -1,6 +1,7 @@
 import traceback
 from iot_api import app
 import werkzeug
+import marshmallow
 
 import iot_logging
 log = iot_logging.getLogger(__name__)
@@ -68,6 +69,8 @@ def handle_error(error):
         return handle_404(NotFound(error))
     elif isinstance(error, werkzeug.exceptions.UnprocessableEntity):
         return handle_422(UnprocessableEntity(error))
+    elif isinstance(error, marshmallow.ValidationError):
+        return handle_400(BadRequest(error))
     else:
         # For not typified exceptions, the server respond with a html code 500 
         # and save the message and traceback in the log.
