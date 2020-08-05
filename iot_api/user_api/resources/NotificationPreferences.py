@@ -60,11 +60,20 @@ class NotificationPreferencesAPI(Resource):
         response = {
             'destinations': preferences,
             'risks': alert_settings,
-            'asset_importance': {
-                'high' : asset_importance.high,
-                'medium' : asset_importance.medium,
-                'low' : asset_importance.low,
-            },
+            'asset_importance': [
+                {
+                    'name': 'high',
+                    'enabled': asset_importance.high,
+                },
+                {
+                    'name': 'medium',
+                    'enabled': asset_importance.medium,
+                },
+                {
+                    'name': 'low',
+                    'enabled': asset_importance.low,
+                },
+            ],
             'dataCollectors': dc_settings
         }
         return response, 200
@@ -165,13 +174,15 @@ class NotificationPreferencesAPI(Resource):
                 setattr(nas, attr, risk.get('enabled'))
 
             # Update asset importances
-            nas = NotificationAssetImportance.get_with(user_id = user.id)  
-            for pair in parsed_result['asset_importance']:
-                if attr not in ('high', 'medium', 'low', 'info'):
+            asset_importances = parsed_result.get('asset_importance')
+            nai = NotificationAssetImportance.get_with(user_id = user.id)
+            for importance in asset_importances:
+                attr = importance.get('name')
+                if attr not in ('high', 'medium', 'low'):
                     NotificationPreferences.rollback()
-                    LOG.error('Risk must be one these: high, medium, low, info. But it\'s: {0}'.format(attr))
-                    return {'error': 'Risk must be one these: high, medium, low, info'}, 400
-                setattr(nas, attr, risk.get('enabled'))
+                    LOG.error('Asset importance name must be one these: high, medium, low. But it\'s: {0}'.format(attr))
+                    return {'error': 'Asset importance name must be one these: high, medium, low'}, 400
+                setattr(nai, attr, importance.get('enabled'))
 
             # Update data collectors. Check if dc belongs to user organization
             data_collectors = parsed_result.get('data_collectors')
@@ -239,31 +250,32 @@ class NotificationPhoneActivationAPI(Resource):
         return {'phone': phone.phone}, 200        
 
 def send_activation_emails():
-    with app.app_context():
-        server = smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT)
-        #server.set_debuglevel(1)
-        server.ehlo()
-        server.starttls()
-        #stmplib docs recommend calling ehlo() before & after starttls()
-        server.ehlo()
-        server.login(config.SMTP_USERNAME, config.SMTP_PASSWORD)
-        single = singletonURL()
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = "RoLaGuard Email Confirmation"
-        msg['From'] = email.utils.formataddr((config.SMTP_SENDER_NAME, config.SMTP_SENDER))
+    if config.SEND_EMAILS:
+        with app.app_context():
+            server = smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT)
+            #server.set_debuglevel(1)
+            server.ehlo()
+            server.starttls()
+            #stmplib docs recommend calling ehlo() before & after starttls()
+            server.ehlo()
+            server.login(config.SMTP_USERNAME, config.SMTP_PASSWORD)
+            single = singletonURL()
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = "RoLaGuard Email Confirmation"
+            msg['From'] = email.utils.formataddr((config.SMTP_SENDER_NAME, config.SMTP_SENDER))
 
-        for item in activation_emails:
-            token = item.get('token')
-            email_user = item.get('email')
-            full_url = single.getParam() + "notifications/email_activation/" + str(token)
-            print('init email sending')
-            msg['To'] = email_user
-            part = MIMEText(render_template(
-                'notification_activation.html', full_url=full_url),'html')
-            msg.attach(part)
-            server.sendmail(config.SMTP_SENDER,email_user, msg.as_string())
-            print("finished email sending")
-        server.close()    
+            for item in activation_emails:
+                token = item.get('token')
+                email_user = item.get('email')
+                full_url = single.getParam() + "notifications/email_activation/" + str(token)
+                print('init email sending')
+                msg['To'] = email_user
+                part = MIMEText(render_template(
+                    'notification_activation.html', full_url=full_url),'html')
+                msg.attach(part)
+                server.sendmail(config.SMTP_SENDER,email_user, msg.as_string())
+                print("finished email sending")
+            server.close()    
 
 def send_activation_sms():
     if config.SEND_SMS:
