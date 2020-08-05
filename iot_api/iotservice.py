@@ -1,5 +1,3 @@
-# iotservice
-
 # -*- coding: utf-8 -*-
 """
     IoT API
@@ -144,6 +142,9 @@ api.add_resource(res.AssetsPerGatewayCountAPI, '/api/v1.0/inventory/count/gatewa
 api.add_resource(res.AssetsPerDatacollectorCountAPI, '/api/v1.0/inventory/count/data_collector')
 api.add_resource(res.AssetsPerTagCountAPI, '/api/v1.0/inventory/count/tag')
 
+# Asset importance
+api.add_resource(res.AssetImportanceAPI, '/api/v1.0/inventory/set_importance')
+
 # Tags
 api.add_resource(res.TagListAPI, '/api/v1.0/tags')
 api.add_resource(res.TagAPI, '/api/v1.0/tags/<int:tag_id>')
@@ -152,6 +153,4 @@ api.add_resource(res.TagAssetsAPI, '/api/v1.0/tags/<int:tag_id>/assets')
 
 if __name__ == '__main__':
     socketio.run(app, port=5000)
-#    socketio.run(app)
     db.init_app(app)
-    # app.run(debug=app.config['DEBUG'])
