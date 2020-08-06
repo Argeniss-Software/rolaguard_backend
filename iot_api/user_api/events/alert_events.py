@@ -13,15 +13,12 @@ from iot_api import app
 from iot_api import mail
 from iot_api import rabbit_parameters
 from iot_api.user_api.model import User, Alert, AlertType
-from iot_api.user_api.models import Notification
-from iot_api.user_api.models.NotificationData import NotificationData
-from iot_api.user_api.models.NotificationPreferences import NotificationPreferences
-from iot_api.user_api.models.NotificationDataCollectorSettings import NotificationDataCollectorSettings
-from iot_api.user_api.models.NotificationAlertSettings import NotificationAlertSettings
-from iot_api.user_api.models.NotificationAssetImportance import NotificationAssetImportance
+from iot_api.user_api.models import (
+    Notification, NotificationData, NotificationPreferences, NotificationDataCollectorSettings,
+    NotificationAlertSettings, NotificationAssetImportance, NotificationAdditionalEmail,
+    NotificationAdditionalTelephoneNumber
+)
 from iot_api.user_api.repository import AssetRepository
-from iot_api.user_api.models.NotificationAdditionalEmail import NotificationAdditionalEmail
-from iot_api.user_api.models.NotificationAdditionalTelephoneNumber import NotificationAdditionalTelephoneNumber
 #from iot_api.user_api.enums import WebUrl
 from iot_api.user_api.singletonURL import singletonURL
 

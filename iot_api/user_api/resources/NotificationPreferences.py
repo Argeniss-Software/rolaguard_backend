@@ -179,9 +179,7 @@ class NotificationPreferencesAPI(Resource):
             for importance in asset_importances:
                 attr = importance.get('name')
                 if attr not in ('high', 'medium', 'low'):
-                    NotificationPreferences.rollback()
-                    LOG.error('Asset importance name must be one these: high, medium, low. But it\'s: {0}'.format(attr))
-                    return {'error': 'Asset importance name must be one these: high, medium, low'}, 400
+                    raise Error.BadRequest('Asset importance name must be one these: high, medium, low. But it\'s: {0}'.format(attr))
                 setattr(nai, attr, importance.get('enabled'))
 
             # Update data collectors. Check if dc belongs to user organization
