@@ -7,3 +7,6 @@ class NotificationAssetTag(db.Model):
     user_id = Column(BigInteger, ForeignKey("iot_user.id"), nullable=False, primary_key=True)
     tag_id = Column(BigInteger, ForeignKey("tag.id"), nullable=False, primary_key=True)
     
+    @classmethod
+    def find_all_by_user_id(cls, user_id):
+        return cls.query.filter_by(user_id=user_id).all()

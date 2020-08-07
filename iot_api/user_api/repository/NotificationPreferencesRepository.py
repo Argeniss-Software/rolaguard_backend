@@ -1,18 +1,52 @@
 import iot_logging
-log = iot_logging.getLogger(__name__)
+LOG = iot_logging.getLogger(__name__)
 
-from sqlalchemy import func, or_, distinct
-from sqlalchemy.sql import select, expression, text
+from sqlalchemy import not_
 
 from iot_api.user_api import db
 from iot_api.user_api.models import Tag, NotificationAssetTag
 from iot_api.user_api import Error
+from iot_api.user_api.repository import TagRepository
 
 def get_asset_tags(user_id):
     """
-    Get the list of asset tags that a device must have
-    to notify the user when an alert event occurs.
+    Get the list of tags that a device must have, according to this user's
+    NotificationPreferences, in order to notify him when an alert event occurs.
     """
-    result = db.session.query(Tag, NotificationAssetTag).filter(NotificationAssetTag.user_id == user_id).filter(NotificationAssetTag.tag_id == Tag.id).all()
+    result = db.session.query(Tag).filter(
+        NotificationAssetTag.user_id == user_id,
+        NotificationAssetTag.tag_id == Tag.id
+        ).all()
     return result if result else []
-    
+
+
+def upsert_asset_tags(user_id, tag_id_list):
+    """
+    Insert rows in the DB to relate this user with every tag in
+    tag_id_list, considering that they may be already related.
+    """
+    db_entries = NotificationAssetTag.find_all_by_user_id(user_id)
+    already_in_db = set()
+    for row in db_entries:
+        already_in_db.add(row.tag_id)
+    for tag_id in tag_id_list:
+        if tag_id not in already_in_db:
+            db.session.add(NotificationAssetTag(user_id = user_id, tag_id = tag_id))
+    # Not committing changes because all the changes will be committed together later by NotificationPreferences
+
+def set_asset_tags(user_id, tag_id_list):
+    """
+    1- Check that each tag in tag_id_list belongs to the user's organization
+    2- Delete every entry that relates the user with tags that are not present in tag_list.
+    3- Upsert tags for this user
+    """
+    if not TagRepository.are_from_user_organization(tag_id_list, user_id):
+        raise Error.BadRequest("Every asset_tag for a user's notification preferences must belong to his organization")
+
+    db.session.query(NotificationAssetTag).filter(
+        NotificationAssetTag.user_id == user_id,
+        not_(NotificationAssetTag.tag_id.in_(tag_id_list))
+        ).delete(synchronize_session = False)
+
+    upsert_asset_tags(user_id, tag_id_list)
+    # Not committing changes because all the changes will be committed together later by NotificationPreferences

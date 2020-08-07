@@ -193,6 +193,13 @@ class NotificationPreferencesAPI(Resource):
                     raise Error.BadRequest('Asset importance name must be one these: high, medium, low. But it\'s: {0}'.format(attr))
                 setattr(nai, attr, importance.get('enabled'))
 
+            # Update asset tags
+            asset_tags = parsed_result.get('asset_tags')
+            tag_id_list = []
+            for tag in asset_tags:
+                tag_id_list.append(tag.get('id'))
+            NotificationPreferencesRepository.set_asset_tags(user.id, tag_id_list)
+
             # Update data collectors. Check if dc belongs to user organization
             data_collectors = parsed_result.get('data_collectors')
             for dcp in data_collectors:
