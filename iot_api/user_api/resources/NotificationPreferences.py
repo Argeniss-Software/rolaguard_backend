@@ -22,6 +22,7 @@ from iot_api.user_api.models import (
     NotificationAdditionalTelephoneNumber, DataCollector,
     NotificationAssetImportance
 )
+from iot_api.user_api.repository import NotificationPreferencesRepository
 from iot_api.user_api import Error
 
 from iot_api.user_api.schemas.notification_preferences_schema import NotificationPreferencesSchema
@@ -60,6 +61,8 @@ class NotificationPreferencesAPI(Resource):
         if not asset_importance:
             asset_importance = NotificationAssetImportance(user_id = user.id).save()
 
+        tag_list = NotificationPreferencesRepository.get_asset_tags(user.id)
+
         response = {
             'destinations': preferences,
             'risks': alert_settings,
@@ -77,7 +80,12 @@ class NotificationPreferencesAPI(Resource):
                     'enabled': asset_importance.low,
                 },
             ],
-            'dataCollectors': dc_settings
+            'dataCollectors': dc_settings,
+            'asset_tags': [{
+                "id" : tag.id,
+                "name" : tag.name,
+                "color": tag.color
+            } for tag in tag_list]
         }
         return response, 200
 
