@@ -17,6 +17,7 @@ def is_from_organization(device_id, organization_id):
     ).exists()).scalar()
 
 def has_all_tags(device_id, tag_id_list):
+    """ Return a boolean indicating whether the device is tagged with every tag in the list or not """
     return db.session.query(DeviceToTag).filter(
         DeviceToTag.device_id == device_id,
         DeviceToTag.tag_id.in_(tag_id_list)

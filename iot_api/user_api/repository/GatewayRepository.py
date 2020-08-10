@@ -16,6 +16,7 @@ def is_from_organization(gateway_id, organization_id):
     ).exists()).scalar()
 
 def has_all_tags(gateway_id, tag_id_list):
+    """ Return a boolean indicating whether the gateway is tagged with every tag in the list or not """
     return db.session.query(GatewayToTag).filter(
         GatewayToTag.gateway_id == gateway_id,
         GatewayToTag.tag_id.in_(tag_id_list)
