@@ -195,10 +195,8 @@ class NotificationPreferencesAPI(Resource):
 
             # Update asset tags
             asset_tags = parsed_result.get('asset_tags')
-            tag_id_list = []
-            for tag in asset_tags:
-                tag_id_list.append(tag.get('id'))
-            NotificationPreferencesRepository.set_asset_tags(user.id, tag_id_list)
+            tag_id_list = [tag.get('id') for tag in asset_tags]
+            NotificationPreferencesRepository.set_asset_tags(user.id, tag_id_list, False)
 
             # Update data collectors. Check if dc belongs to user organization
             data_collectors = parsed_result.get('data_collectors')

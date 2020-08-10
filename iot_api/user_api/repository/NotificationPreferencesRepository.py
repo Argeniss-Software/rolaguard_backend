@@ -20,33 +20,32 @@ def get_asset_tags(user_id):
     return result if result else []
 
 
-def upsert_asset_tags(user_id, tag_id_list):
+def upsert_asset_tags(user_id, tag_id_list, commit=True):
     """
     Insert rows in the DB to relate this user with every tag in
     tag_id_list, considering that they may be already related.
     """
-    db_entries = NotificationAssetTag.find_all_by_user_id(user_id)
-    already_in_db = set()
-    for row in db_entries:
-        already_in_db.add(row.tag_id)
+    db_entries = NotificationAssetTag.find_all_with(user_id = user_id)
+    already_in_db = set([row.tag_id for row in db_entries])
     for tag_id in tag_id_list:
         if tag_id not in already_in_db:
             db.session.add(NotificationAssetTag(user_id = user_id, tag_id = tag_id))
-    # Not committing changes because all the changes will be committed together later by NotificationPreferences
+    if commit:
+        db.session.commit()
 
-def set_asset_tags(user_id, tag_id_list):
+def set_asset_tags(user_id, tag_id_list, commit=True):
     """
     1- Check that each tag in tag_id_list belongs to the user's organization
     2- Delete every entry that relates the user with tags that are not present in tag_list.
     3- Upsert tags for this user
     """
     if not TagRepository.are_from_user_organization(tag_id_list, user_id):
-        raise Error.BadRequest("Every asset_tag for a user's notification preferences must belong to his organization")
+        raise Error.Unauthorized("Every asset_tag for a user's notification preferences must belong to his organization")
 
     db.session.query(NotificationAssetTag).filter(
         NotificationAssetTag.user_id == user_id,
         not_(NotificationAssetTag.tag_id.in_(tag_id_list))
         ).delete(synchronize_session = False)
 
-    upsert_asset_tags(user_id, tag_id_list)
-    # Not committing changes because all the changes will be committed together later by NotificationPreferences
+    upsert_asset_tags(user_id, tag_id_list, commit)
+    

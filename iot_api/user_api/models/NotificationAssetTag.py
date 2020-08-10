@@ -8,5 +8,5 @@ class NotificationAssetTag(db.Model):
     tag_id = Column(BigInteger, ForeignKey("tag.id"), nullable=False, primary_key=True)
     
     @classmethod
-    def find_all_by_user_id(cls, user_id):
+    def find_all_with(cls, user_id):
         return cls.query.filter_by(user_id=user_id).all()

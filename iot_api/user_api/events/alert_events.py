@@ -116,10 +116,8 @@ def handle_alert_events(ch, method, properties, body):
 
             # Check whether the alert assets contain all the tags in user notification preferences or not
             try:
-                asset_tags = NotificationAssetTag.find_all_by_user_id(user.id)
-                tag_id_list = []
-                for asset_tag in asset_tags:
-                    tag_id_list.append(asset_tag.tag_id)
+                asset_tags = NotificationAssetTag.find_all_with(user_id = user.id)
+                tag_id_list = [asset_tag.tag_id for asset_tag in asset_tags]
                 if device:
                     has_all_tags = DeviceRepository.has_all_tags(device.id, tag_id_list)
                 elif gateway:
