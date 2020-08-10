@@ -611,7 +611,7 @@ class Alert(db.Model):
         if self.device:
             asset_importance = self.device.importance.value
         elif self.gateway:
-            asset_importance = self.device.importance.value
+            asset_importance = self.gateway.importance.value
         else:
             asset_importance = None
         return asset_importance
