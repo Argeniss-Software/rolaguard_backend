@@ -44,12 +44,13 @@ def subscribe_alert_consumers():
     thread.start()
 
 def consumer():
+    queue="alert_events"
     while(True):
         try:
             LOG.debug('Creating new connection to queue alert_events')
             connection = pika.BlockingConnection(rabbit_parameters)
             channel = connection.channel()
-            channel.queue_declare(queue="alert_events", durable=True)
+            channel.queue_declare(queue=queue, durable=True)
             channel.basic_consume(on_message_callback=handle_alert_events, queue=queue, auto_ack=True)
             channel.start_consuming()
         except Exception as e:
