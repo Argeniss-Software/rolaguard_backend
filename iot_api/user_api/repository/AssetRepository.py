@@ -8,8 +8,25 @@ from iot_api.user_api import db
 from iot_api.user_api.repository import DeviceRepository, GatewayRepository
 from iot_api.user_api.model import Device, Gateway, DataCollectorToDevice, GatewayToDevice
 from iot_api.user_api.models import DataCollector, DeviceToTag, GatewayToTag, Tag
+from iot_api.user_api import Error
 
 from collections import defaultdict
+
+
+def get_with(asset_id, asset_type):
+    if asset_type=="device":
+        asset = db.session.query(Device).\
+            filter(Device.id == asset_id).\
+            first()
+    elif asset_type=="gateway":
+        asset = db.session.query(Gateway).\
+            filter(Gateway.id == asset_id).\
+            first()
+    else:
+        raise Exception(f"Invalid asset_type: {asset_type}")
+    if not asset:
+        raise Exception(f"Asset with id {asset_id} and type {asset_type} not found")
+    return asset
 
 
 def list_all(organization_id, page=None, size=None,
@@ -39,7 +56,8 @@ def list_all(organization_id, page=None, size=None,
         cast(expression.null(), Numeric).label('location_longitude'),
         Device.app_name,
         DataCollector.name.label('data_collector'),
-        Device.vendor
+        Device.vendor,
+        Device.importance
         ).select_from(Device).\
             join(DataCollectorToDevice).join(DataCollector).\
             join(GatewayToDevice).\
@@ -54,7 +72,8 @@ def list_all(organization_id, page=None, size=None,
         Gateway.location_longitude,
         expression.null().label('app_name'),
         DataCollector.name.label('data_collector'),
-        Gateway.vendor
+        Gateway.vendor,
+        Gateway.importance
         ).select_from(Gateway).\
             join(DataCollector).\
             filter(Gateway.organization_id == organization_id)
@@ -81,7 +100,7 @@ def list_all(organization_id, page=None, size=None,
     elif asset_type == "gateway":
         asset_query = gtw_query
     else:
-        raise Exception("Invalid asset type parameter")
+        raise Error.BadRequest("Invalid device type parameter")
 
     asset_query = asset_query.order_by(text('type desc'))
     if page and size:
@@ -106,12 +125,14 @@ def count_per_vendor(organization_id, vendors=None, gateway_ids=None,
     """
     # Build two queries, one for devices and one for gateways
     dev_query = db.session.query(Device.vendor, func.count(distinct(Device.id))).\
+
         join(DataCollectorToDevice).\
         join(GatewayToDevice).\
         group_by(Device.vendor).\
         filter(Device.organization_id==organization_id)
 
     gtw_query = db.session.query(Gateway.vendor, func.count(distinct(Gateway.id))).\
+
         group_by(Gateway.vendor).\
         filter(Gateway.organization_id==organization_id)
 
@@ -137,7 +158,7 @@ def count_per_vendor(organization_id, vendors=None, gateway_ids=None,
     elif asset_type == "gateway":
         all_counts = gtw_query.all()
     else:
-        raise Exception("Invalid asset type parameter")
+        raise Error.BadRequest("Invalid device type parameter")
 
     counts = defaultdict(lambda: {'name' : None, 'count' : 0})
     for e in all_counts:
@@ -194,12 +215,13 @@ def count_per_gateway(organization_id, vendors=None, gateway_ids=None,
     elif asset_type == "gateway":
         all_counts = gtw_query.all()
     else:
-        raise Exception("Invalid asset type parameter")
+        raise Error.BadRequest("Invalid device type parameter")
 
     counts = defaultdict(lambda: {'name' : None, 'count' : 0})
     for e in all_counts:
         counts[e[0]]['name'] = e[1]
         counts[e[0]]['count'] += e[2]
+
     return [{'id' : k, 'name':v['name'], 'count':v['count']} for k, v in counts.items()]
 
 
@@ -253,8 +275,8 @@ def count_per_datacollector(organization_id, vendors=None, gateway_ids=None,
     elif asset_type == "gateway":
         all_counts = gtw_query.all()
     else:
-        raise Exception("Invalid asset type parameter")
-
+        raise Error.BadRequest("Invalid device type parameter")
+        
     # Join the results of the queries
     counts = defaultdict(lambda: {'name' : None, 'count' : 0})
     for e in all_counts:
