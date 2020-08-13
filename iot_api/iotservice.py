@@ -14,12 +14,6 @@ from iot_api.user_api import resources as res
 from iot_api import app, api, jwt
 from iot_api.user_api import db
 from iot_api import mail, socketio
-from iot_api.user_api.resources.policy import PolicyResource, PolicyListResource
-from iot_api.user_api.resources.data_collector_log_event import DataCollectorLogEventListResource
-from iot_api.user_api.resources.data_collector import DataCollectorActivityResource
-from iot_api.user_api.resources.NotificationPreferences import NotificationPreferencesAPI, NotificationEmailActivationAPI, NotificationPhoneActivationAPI
-from iot_api.user_api.resources.notification import NotificationListResource, NotificationCountResource, NotificationResource
-from iot_api.user_api.resources.ResourceUsage import ResourceUsageListAPI
 from iot_api.user_api.model import RevokedTokenModel
 
 import simplejson as json
@@ -146,7 +140,7 @@ api.add_resource(res.TagAPI, '/api/v1.0/tags/<int:tag_id>')
 api.add_resource(res.TagAssetsAPI, '/api/v1.0/tags/<int:tag_id>/assets')
 
 # Resource usage
-api.add_resource(ResourceUsageListAPI, '/api/v1.0/resource_usage/list')
+api.add_resource(res.ResourceUsageListAPI, '/api/v1.0/resource_usage/list')
 
 
 if __name__ == '__main__':
