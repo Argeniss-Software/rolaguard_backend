@@ -9,3 +9,4 @@ from iot_api.user_api.resources.NotificationPreferences import (
     NotificationPhoneActivationAPI
     )
 from iot_api.user_api.resources.AssetImportance import AssetImportanceAPI
+from iot_api.user_api.resources.ResourceUsage import ResourceUsageListAPI

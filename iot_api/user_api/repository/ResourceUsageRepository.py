@@ -1,19 +1,19 @@
 import iot_logging
 log = iot_logging.getLogger(__name__)
 
-from sqlalchemy import distinct
+from sqlalchemy import distinct, cast, Float
 from sqlalchemy.sql import select, expression, text
 
 from iot_api.user_api import db
 from iot_api.user_api.repository import DeviceRepository, GatewayRepository
 from iot_api.user_api.model import Device, Gateway, DataCollectorToDevice, GatewayToDevice
-from iot_api.user_api.models import DataCollector, Tag
+from iot_api.user_api.models import DataCollector
 from iot_api.user_api import Error
 
 
 def list_all(organization_id, page=None, size=None,
              gateway_ids=None, data_collector_ids=None,
-             tag_ids=None, asset_type=None):
+             asset_type=None):
     """ List assets of an organization.
     Parameters:
         - organization_id: which organization.
@@ -21,7 +21,6 @@ def list_all(organization_id, page=None, size=None,
         - size: for pagination.
         - gateway_ids[]: for filtering, list only the assets connected to ANY one of these gateways.
         - data_collector_ids[]: for filtering, list only the assest related to ANY of these data collectors.
-        - tag_ids[]: for filtering, list only the assest that have ALL these tags.
         - asset_type: for filtering, list only this type of asset ("device" or "gateway").
     Returns:
         - A dict with the list of assets.
@@ -39,7 +38,7 @@ def list_all(organization_id, page=None, size=None,
         Device.activity_freq,
         Device.npackets_up,
         Device.npackets_down,
-        Device.npackets_lost.lable('packet_loss'),
+        Device.npackets_lost.label('packet_loss'),
         Device.max_rssi
         ).select_from(Device).\
             join(DataCollectorToDevice).join(DataCollector).\
@@ -57,8 +56,8 @@ def list_all(organization_id, page=None, size=None,
         Gateway.activity_freq,
         Gateway.npackets_up,
         Gateway.npackets_down,
-        expression.null().label('packet_loss'),
-        expression.null().label('max_rssi')
+        cast(expression.null(), Float).label('packet_loss'),
+        cast(expression.null(), Float).label('max_rssi')
         ).select_from(Gateway).\
             join(DataCollector).\
             filter(Gateway.organization_id == organization_id)
@@ -72,9 +71,6 @@ def list_all(organization_id, page=None, size=None,
     if data_collector_ids:
         dev_query = dev_query.filter(DataCollectorToDevice.data_collector_id.in_(data_collector_ids))
         gtw_query = gtw_query.filter(Gateway.data_collector_id.in_(data_collector_ids))
-    if tag_ids:
-        dev_query = dev_query.filter(Device.id.in_(DeviceRepository.query_ids_with(tag_ids=tag_ids)))
-        gtw_query = gtw_query.filter(Gateway.id.in_(GatewayRepository.query_ids_with(tag_ids=tag_ids)))
 
     # Filter by device type if the parameter was given, else, make a union with queries.
     if asset_type is None:
