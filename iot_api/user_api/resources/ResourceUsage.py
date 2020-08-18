@@ -82,11 +82,11 @@ def buildPacketsInfo(uptime, count, total):
     Returns:
         - JSON with packets related information (see code for more details about the fields).
     """
-    secs_bw_pakcets = uptime/count if count else None
+    secs_bw_packets = uptime/count if count else None
     return {
-        'total': count if secs_bw_pakcets else 0,
-        'per_minute': 60/secs_bw_pakcets if secs_bw_pakcets else 0,
-        'per_hour': 60*60/secs_bw_pakcets if secs_bw_pakcets else 0,
-        'per_day': 24*60*60/secs_bw_pakcets if secs_bw_pakcets else 0,
+        'total': count,
+        'per_minute': 60/secs_bw_packets if secs_bw_packets else 0,
+        'per_hour': 60*60/secs_bw_packets if secs_bw_packets else 0,
+        'per_day': 24*60*60/secs_bw_packets if secs_bw_packets else 0,
         'percentage': 100*count/total if total else None
     }

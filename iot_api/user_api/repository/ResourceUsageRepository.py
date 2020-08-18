@@ -33,7 +33,7 @@ def list_all(organization_id, page=None, size=None,
         Device.name,
         Device.app_name,
         DataCollector.name.label('data_collector'),
-        Device.connected,
+        Device.connected.label('connected'),
         Device.last_activity,
         Device.activity_freq,
         Device.npackets_up,
@@ -51,7 +51,7 @@ def list_all(organization_id, page=None, size=None,
         Gateway.name,
         expression.null().label('app_name'),
         DataCollector.name.label('data_collector'),
-        Gateway.connected,
+        Gateway.connected.label('connected'),
         Gateway.last_activity,
         Gateway.activity_freq,
         Gateway.npackets_up,
@@ -84,7 +84,7 @@ def list_all(organization_id, page=None, size=None,
 
     #TODO: add filter by dates
 
-    asset_query = asset_query.order_by(text('type desc'))
+    asset_query = asset_query.order_by(text('type desc, connected desc'))
     if page and size:
         return asset_query.paginate(page=page, per_page=size, error_out=False)
     else:
