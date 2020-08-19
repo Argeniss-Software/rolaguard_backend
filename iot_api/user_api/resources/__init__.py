@@ -29,3 +29,4 @@ from .policy import (
     PolicyResource
 )
 from .AppKeys import AppKeysAPI
+from .ResourceUsage import ResourceUsageListAPI
