@@ -30,11 +30,15 @@ class AppKeysAPI(Resource):
 
         app_keys = AppKeysRepository.get_with(organization_id = organization_id)
 
-        return [{
-            "id": app_key.id,
-            "key": app_key.key,
-            "organization_id": app_key.organization_id
-        } for app_key in app_keys], 200
+        return {
+            "limit": MAX_PER_ORGANIZATION,
+            "count": len(app_keys),
+            "keys": [{
+                "id": app_key.id,
+                "key": app_key.key,
+                "organization_id": app_key.organization_id
+            } for app_key in app_keys]
+        }, 200
         
     @jwt_required
     def post(self):
