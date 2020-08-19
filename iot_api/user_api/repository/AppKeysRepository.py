@@ -48,3 +48,16 @@ def create(keys_list, organization_id):
 
     db.session.commit()
     return created
+
+def delete(keys_list, organization_id):
+    """
+    Delete every app_key present in keys_list that is
+    part of this organizantion's set of keys.
+    """
+    qry = db.session.query(AppKey).filter(
+        AppKey.organization_id == organization_id,
+        AppKey.key.in_(keys_list))
+    deleted = qry.count()
+    qry.delete(synchronize_session = False)
+    db.session.commit()
+    return deleted
