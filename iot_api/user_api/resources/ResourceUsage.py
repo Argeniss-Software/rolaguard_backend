@@ -35,11 +35,15 @@ class ResourceUsageListAPI(Resource):
         size = request.args.get('size', default=20, type=int)
 
         results = ResourceUsageRepository.list_all(
-            organization_id=organization_id,
-            page=page, size=size,
-            gateway_ids=request.args.getlist('gateway_ids[]'),
-            data_collector_ids=request.args.getlist('data_collector_ids[]'),
-            asset_type=request.args.get('asset_type', type=str)
+            organization_id = organization_id,
+            page = page, size = size,
+            asset_type = request.args.get('asset_type', default=None, type=str),
+            asset_status = request.args.get('asset_status', default=None, type=str),
+            gateway_ids = request.args.getlist('gateway_ids[]'),
+            min_signal_strength = request.args.get('min_signal_strength', default = None, type=int),
+            max_signal_strength = request.args.get('max_signal_strength', default = None, type=int),
+            min_packet_loss = request.args.get('min_packet_loss', default = None, type=int),
+            max_packet_loss = request.args.get('max_packet_loss', default = None, type=int)
         )
 
         PacketsInfo = namedtuple('PacketsInfo', ['up', 'down', 'lost'])

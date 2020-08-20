@@ -12,18 +12,19 @@ from iot_api.user_api import Error
 
 
 def list_all(organization_id, page=None, size=None,
-             gateway_ids=None, data_collector_ids=None,
-             asset_type=None):
+            asset_type=None, asset_status=None, gateway_ids=None,
+            min_signal_strength=None, max_signal_strength=None,
+            min_packet_loss=None, max_packet_loss=None):
     """ List assets of an organization.
-    Parameters:
-        - organization_id: which organization.
-        - page: for pagination.
-        - size: for pagination.
-        - gateway_ids[]: for filtering, list only the assets connected to ANY one of these gateways.
-        - data_collector_ids[]: for filtering, list only the assest related to ANY of these data collectors.
-        - asset_type: for filtering, list only this type of asset ("device" or "gateway").
-    Returns:
-        - A dict with the list of assets.
+    Parameters: 
+        - asset_type: for filtering, count only this type of asset ("device" or "gateway").
+        - asset_status: for filtering, count only assets with this status ("connected" or "disconnected").
+        - gateway_ids[]: for filtering, count only the assets connected to ANY one of these gateways.
+        - min_signal_strength: for filtering, count only the assets with signal strength not lower than this value (dBm)
+        - max_signal_strength: for filtering, count only the assets with signal strength not higher than this value (dBm)
+        - min_packet_loss: for filtering, count only the assets with packet loss not lower than this value (percentage)
+        - max_packet_loss: for filtering, count only the assets with packet loss not higher than this value (percentage)
+    Returns a dict with the list of assets.
     """
     # Build two queries, one for devices and one for gateways
     dev_query = db.session.query(
@@ -64,13 +65,18 @@ def list_all(organization_id, page=None, size=None,
     #TODO: add number of devices per gateway / number of gateways per device
     #TODO: add number of sessions (distinct devAddr)
 
-    # If filter parameters were given, add the respective where clauses to the queries
-    if gateway_ids:
-        dev_query = dev_query.filter(GatewayToDevice.gateway_id.in_(gateway_ids))
-        gtw_query = gtw_query.filter(Gateway.id.in_(gateway_ids))
-    if data_collector_ids:
-        dev_query = dev_query.filter(DataCollectorToDevice.data_collector_id.in_(data_collector_ids))
-        gtw_query = gtw_query.filter(Gateway.data_collector_id.in_(data_collector_ids))
+    queries = add_filters(
+        dev_query = dev_query,
+        gtw_query = gtw_query,
+        asset_type = asset_type,
+        asset_status = asset_status,
+        gateway_ids = gateway_ids,
+        min_signal_strength = min_signal_strength,
+        max_signal_strength = max_signal_strength,
+        min_packet_loss = min_packet_loss,
+        max_packet_loss = max_packet_loss)    
+    dev_query = queries[0]
+    gtw_query = queries[1]
 
     # Filter by device type if the parameter was given, else, make a union with queries.
     if asset_type is None:
@@ -80,9 +86,7 @@ def list_all(organization_id, page=None, size=None,
     elif asset_type == "gateway":
         asset_query = gtw_query
     else:
-        raise Error.BadRequest("Invalid device type parameter")
-
-    #TODO: add filter by dates
+        raise Error.BadRequest("Invalid asset type parameter")
 
     asset_query = asset_query.order_by(text('type desc, connected desc, id'))
     if page and size:
@@ -94,7 +98,7 @@ def count_per_status(organization_id, asset_type=None, asset_status=None, gatewa
                     min_signal_strength=None, max_signal_strength=None,
                     min_packet_loss=None, max_packet_loss=None):
     """ Count assets (devices+gateways) grouped by status (connected/disconnected).
-    Request parameters: 
+    Parameters: 
         - asset_type: for filtering, count only this type of asset ("device" or "gateway").
         - asset_status: for filtering, count only assets with this status ("connected" or "disconnected").
         - gateway_ids[]: for filtering, count only the assets connected to ANY one of these gateways.
