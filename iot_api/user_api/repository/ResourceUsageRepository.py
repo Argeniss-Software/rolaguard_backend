@@ -108,13 +108,13 @@ def count_per_status(organization_id, asset_type=None, asset_status=None, gatewa
         - max_packet_loss: for filtering, count only the assets with packet loss not higher than this value (percentage)
     Returns a dict with the keys 'count_connected' and 'count_disconnected'
     """
-    dev_query = db.session.query(Device.connected, func.count(distinct(Device.id)).label("count")).\
+    dev_query = db.session.query(Device.connected, func.count(distinct(Device.id)).label("count_result")).\
         select_from(Device).\
         join(GatewayToDevice).\
         group_by(Device.connected).\
         filter(Device.organization_id==organization_id)
 
-    gtw_query = db.session.query(Gateway.connected, func.count(distinct(Gateway.id).label("count"))).\
+    gtw_query = db.session.query(Gateway.connected, func.count(distinct(Gateway.id).label("count_result"))).\
         select_from(Gateway).\
         group_by(Gateway.connected).\
         filter(Device.organization_id==organization_id)
@@ -145,11 +145,12 @@ def count_per_status(organization_id, asset_type=None, asset_status=None, gatewa
     # Join the results of the queries
     response = dict([('count_connected', 0), ('count_disconnected', 0)])
     for row in result:
+        log.debug(f"row: {row}")
         if row.connected:
             status = 'count_connected'
         else:
             status = 'count_disconnected'
-        response[status] += row.count
+        response[status] += row.count_result
 
     return response
     
@@ -177,15 +178,19 @@ def add_filters(dev_query, gtw_query, asset_type=None, asset_status=None,
         dev_query = dev_query.filter(and_(Device.max_rssi != null(), Device.max_rssi <= max_signal_strength))
     if min_packet_loss is not None:
         dev_query = dev_query.filter(and_(
-            Device.npackets_up > 0,
+            Device.npackets_up + Device.npackets_down > 0,
             Device.npackets_lost != null(),
-            Device.npackets_up*Device.npackets_lost/(Device.npackets_up*(1+Device.npackets_lost))*100 >= min_packet_loss
+            100*Device.npackets_up*Device.npackets_lost \
+                /(Device.npackets_up*(1+Device.npackets_lost) + Device.npackets_down) \
+                    >= min_packet_loss
         ))
     if max_packet_loss is not None:
         dev_query = dev_query.filter(and_(
-            Device.npackets_up > 0,
+            Device.npackets_up + Device.npackets_down > 0,
             Device.npackets_lost != null(),
-            Device.npackets_up*Device.npackets_lost/(Device.npackets_up*(1+Device.npackets_lost))*100 <= max_packet_loss
+            100*Device.npackets_up*Device.npackets_lost \
+                /(Device.npackets_up*(1+Device.npackets_lost) + Device.npackets_down) \
+                    <= max_packet_loss
         ))
 
     return (dev_query, gtw_query)
