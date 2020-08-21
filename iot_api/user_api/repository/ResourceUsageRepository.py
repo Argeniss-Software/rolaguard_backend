@@ -311,7 +311,7 @@ def add_filters(dev_query, gtw_query, asset_type=None, asset_status=None,
     if min_signal_strength is not None:
         dev_query = dev_query.filter(and_(Device.max_rssi != null(), Device.max_rssi >= min_signal_strength))
     if max_signal_strength is not None:
-        dev_query = dev_query.filter(and_(Device.max_rssi != null(), Device.max_rssi <= max_signal_strength))
+        dev_query = dev_query.filter(and_(Device.max_rssi != null(), Device.max_rssi < max_signal_strength))
     if min_packet_loss is not None:
         dev_query = dev_query.filter(and_(
             Device.npackets_up + Device.npackets_down > 0,
@@ -326,7 +326,7 @@ def add_filters(dev_query, gtw_query, asset_type=None, asset_status=None,
             Device.npackets_lost != null(),
             100*Device.npackets_up*Device.npackets_lost \
                 /(Device.npackets_up*(1+Device.npackets_lost) + Device.npackets_down) \
-                    <= max_packet_loss
+                    < max_packet_loss
         ))
 
     return (dev_query, gtw_query)
