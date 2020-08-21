@@ -242,7 +242,7 @@ def count_per_signal_strength(organization_id, asset_type=None, asset_status=Non
         dev_query = dev_query.add_column(func.count(distinct(Device.id)).filter(and_(
             Device.max_rssi != null(),
             L <= Device.max_rssi,
-            Device.max_rssi <= R
+            Device.max_rssi < R
             )).label(name))
         
         # Gateways are not considered because they don't have the rssi value
