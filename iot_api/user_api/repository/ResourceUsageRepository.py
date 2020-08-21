@@ -277,7 +277,7 @@ def count_per_signal_strength(organization_id, asset_type=None, asset_status=Non
 def count_per_packet_loss(organization_id, asset_type=None, asset_status=None, gateway_ids=None,
                     min_signal_strength=None, max_signal_strength=None,
                     min_packet_loss=None, max_packet_loss=None):
-    """ Count assets (devices+gateways) grouped by specific ranges of signal strength values
+    """ Count assets (devices+gateways) grouped by specific ranges of packet loss values
     Parameters: 
         - asset_type: for filtering, count only this type of asset ("device" or "gateway").
         - asset_status: for filtering, count only assets with this status ("connected" or "disconnected").
