@@ -127,3 +127,36 @@ class ResourceUsagePerStatusCountAPI(Resource):
             max_packet_loss = request.args.get('max_packet_loss', default = None, type=int)
         )
         return response, 200
+
+class ResourceUsagePerGatewayCountAPI(Resource):
+    """ Endpoint to count assets (devices+gateways) grouped by gateway.
+    Request parameters: 
+        - asset_type: for filtering, count only this type of asset ("device" or "gateway").
+        - asset_status: for filtering, count only assets with this status ("connected" or "disconnected").
+        - gateway_ids[]: for filtering, count only the assets connected to ANY one of these gateways.
+        - min_signal_strength: for filtering, count only the assets with signal strength not lower than this value (dBm)
+        - max_signal_strength: for filtering, count only the assets with signal strength not higher than this value (dBm)
+        - min_packet_loss: for filtering, count only the assets with packet loss not lower than this value (percentage)
+        - max_packet_loss: for filtering, count only the assets with packet loss not higher than this value (percentage)
+    Returns:
+        - A list of JSONs, where each JSON has three fields: id, hex_id, count.
+    """
+    @jwt_required
+    def get(self):
+        user_identity = get_jwt_identity()
+        user = User.find_by_username(user_identity)
+        if not user or is_system(user.id):
+            raise Error.Forbidden()
+        organization_id = user.organization_id
+
+        response = ResourceUsageRepository.count_per_gateway(
+            organization_id = organization_id,
+            asset_type = request.args.get('asset_type', default=None, type=str),
+            asset_status = request.args.get('asset_status', default=None, type=str),
+            gateway_ids = request.args.getlist('gateway_ids[]'),
+            min_signal_strength = request.args.get('min_signal_strength', default = None, type=int),
+            max_signal_strength = request.args.get('max_signal_strength', default = None, type=int),
+            min_packet_loss = request.args.get('min_packet_loss', default = None, type=int),
+            max_packet_loss = request.args.get('max_packet_loss', default = None, type=int)
+        )
+        return response, 200

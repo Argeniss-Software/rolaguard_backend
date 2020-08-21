@@ -29,4 +29,8 @@ from .policy import (
     PolicyResource
 )
 from .AppKeys import AppKeysAPI
-from .ResourceUsage import ResourceUsageListAPI, ResourceUsagePerStatusCountAPI
+from .ResourceUsage import (
+    ResourceUsageListAPI,
+    ResourceUsagePerStatusCountAPI,
+    ResourceUsagePerGatewayCountAPI
+    )

@@ -10,12 +10,13 @@ from iot_api.user_api.model import Device, Gateway, DataCollectorToDevice, Gatew
 from iot_api.user_api.models import DataCollector
 from iot_api.user_api import Error
 
+from collections import defaultdict
 
 def list_all(organization_id, page=None, size=None,
             asset_type=None, asset_status=None, gateway_ids=None,
             min_signal_strength=None, max_signal_strength=None,
             min_packet_loss=None, max_packet_loss=None):
-    """ List assets of an organization.
+    """ List assets of an organization and their resource usage information.
     Parameters: 
         - asset_type: for filtering, count only this type of asset ("device" or "gateway").
         - asset_status: for filtering, count only assets with this status ("connected" or "disconnected").
@@ -24,7 +25,8 @@ def list_all(organization_id, page=None, size=None,
         - max_signal_strength: for filtering, count only the assets with signal strength not higher than this value (dBm)
         - min_packet_loss: for filtering, count only the assets with packet loss not lower than this value (percentage)
         - max_packet_loss: for filtering, count only the assets with packet loss not higher than this value (percentage)
-    Returns a dict with the list of assets.
+    Returns:
+        - Dict with the list of assets.
     """
     # Build two queries, one for devices and one for gateways
     dev_query = db.session.query(
@@ -106,7 +108,8 @@ def count_per_status(organization_id, asset_type=None, asset_status=None, gatewa
         - max_signal_strength: for filtering, count only the assets with signal strength not higher than this value (dBm)
         - min_packet_loss: for filtering, count only the assets with packet loss not lower than this value (percentage)
         - max_packet_loss: for filtering, count only the assets with packet loss not higher than this value (percentage)
-    Returns a dict with the keys 'count_connected' and 'count_disconnected'
+    Returns:
+        - Dict with the keys 'count_connected' and 'count_disconnected'
     """
     dev_query = db.session.query(Device.connected, func.count(distinct(Device.id)).label("count_result")).\
         select_from(Device).\
@@ -153,6 +156,63 @@ def count_per_status(organization_id, asset_type=None, asset_status=None, gatewa
         response[status] += row.count_result
 
     return response
+
+def count_per_gateway(organization_id, asset_type=None, asset_status=None, gateway_ids=None,
+                    min_signal_strength=None, max_signal_strength=None,
+                    min_packet_loss=None, max_packet_loss=None):
+    """ Count assets (devices+gateways) grouped by gateway.
+    Parameters: 
+        - asset_type: for filtering, count only this type of asset ("device" or "gateway").
+        - asset_status: for filtering, count only assets with this status ("connected" or "disconnected").
+        - gateway_ids[]: for filtering, count only the assets connected to ANY one of these gateways.
+        - min_signal_strength: for filtering, count only the assets with signal strength not lower than this value (dBm)
+        - max_signal_strength: for filtering, count only the assets with signal strength not higher than this value (dBm)
+        - min_packet_loss: for filtering, count only the assets with packet loss not lower than this value (percentage)
+        - max_packet_loss: for filtering, count only the assets with packet loss not higher than this value (percentage)
+    Returns:
+        - List of dicts, where each dict has the gateway id and name, and the count of assets.
+    """
+    # Query to count the number of devices per gateway
+    dev_query = db.session.query(Gateway.id, Gateway.gw_hex_id, func.count(distinct(Device.id)).label("count_result")).\
+        select_from(Gateway).\
+        join(GatewayToDevice).\
+        join(Device).\
+        group_by(Gateway.id, Gateway.gw_hex_id).\
+        filter(Gateway.organization_id==organization_id)
+
+    # The number of gateway grouped by gateway is simply 1
+    gtw_query = db.session.query(Gateway.id, Gateway.gw_hex_id, expression.literal_column("1").label("count_result")).\
+        filter(Gateway.organization_id==organization_id)
+
+    queries = add_filters(
+        dev_query = dev_query,
+        gtw_query = gtw_query,
+        asset_type = asset_type,
+        asset_status = asset_status,
+        gateway_ids = gateway_ids,
+        min_signal_strength = min_signal_strength,
+        max_signal_strength = max_signal_strength,
+        min_packet_loss = min_packet_loss,
+        max_packet_loss = max_packet_loss)    
+    dev_query = queries[0]
+    gtw_query = queries[1]
+    
+    # Execute the queries, filtering by asset type
+    if asset_type is None:
+        result = dev_query.all() + gtw_query.all()
+    elif asset_type == "device":
+        result = dev_query.all()
+    elif asset_type == "gateway":
+        result = gtw_query.all()
+    else:
+        raise Error.BadRequest("Invalid asset type parameter")
+
+    counts = defaultdict(lambda: {'hex_id' : None, 'count' : 0})
+    for row in result:
+        counts[row.id]['hex_id'] = row.gw_hex_id
+        counts[row.id]['count'] += row.count_result
+
+    return [{'id' : k, 'hex_id':v['hex_id'], 'count':v['count']} for k, v in counts.items()]
     
 def add_filters(dev_query, gtw_query, asset_type=None, asset_status=None, 
                 gateway_ids=None, min_signal_strength=None, max_signal_strength=None,
