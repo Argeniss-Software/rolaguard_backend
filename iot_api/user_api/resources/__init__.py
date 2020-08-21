@@ -32,5 +32,6 @@ from .AppKeys import AppKeysAPI
 from .ResourceUsage import (
     ResourceUsageListAPI,
     ResourceUsagePerStatusCountAPI,
-    ResourceUsagePerGatewayCountAPI
+    ResourceUsagePerGatewayCountAPI,
+    ResourceUsagePerSignalStrengthCountAPI
     )
