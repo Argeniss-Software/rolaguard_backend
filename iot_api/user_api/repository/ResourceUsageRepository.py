@@ -135,15 +135,7 @@ def count_per_status(organization_id, asset_type=None, asset_status=None, gatewa
     dev_query = queries[0]
     gtw_query = queries[1]
     
-    # Execute the queries, filtering by asset type
-    if asset_type is None:
-        result = dev_query.all() + gtw_query.all()
-    elif asset_type == "device":
-        result = dev_query.all()
-    elif asset_type == "gateway":
-        result = gtw_query.all()
-    else:
-        raise Error.BadRequest("Invalid asset type parameter")
+    result = query_for_count(dev_query = dev_query, gtw_query = gtw_query, asset_type = asset_type)
 
     # Join the results of the queries
     counts = defaultdict(lambda: {'name' : None, 'count' : 0})
@@ -197,15 +189,7 @@ def count_per_gateway(organization_id, asset_type=None, asset_status=None, gatew
     dev_query = queries[0]
     gtw_query = queries[1]
     
-    # Execute the queries, filtering by asset type
-    if asset_type is None:
-        result = dev_query.all() + gtw_query.all()
-    elif asset_type == "device":
-        result = dev_query.all()
-    elif asset_type == "gateway":
-        result = gtw_query.all()
-    else:
-        raise Error.BadRequest("Invalid asset type parameter")
+    result = query_for_count(dev_query = dev_query, gtw_query = gtw_query, asset_type = asset_type)
 
     counts = defaultdict(lambda: {'name' : None, 'count' : 0})
     for row in result:
@@ -266,15 +250,7 @@ def count_per_signal_strength(organization_id, asset_type=None, asset_status=Non
     dev_query = queries[0]
     gtw_query = queries[1]
     
-    # Execute the queries, filtering by asset type
-    if asset_type is None:
-        result = dev_query.all() + gtw_query.all()
-    elif asset_type == "device":
-        result = dev_query.all()
-    elif asset_type == "gateway":
-        result = gtw_query.all()
-    else:
-        raise Error.BadRequest("Invalid asset type parameter")
+    result = query_for_count(dev_query = dev_query, gtw_query = gtw_query, asset_type = asset_type)
 
     counts = defaultdict(lambda: {'name' : None, 'count' : 0})
     for row in result:
@@ -345,15 +321,7 @@ def count_per_packet_loss(organization_id, asset_type=None, asset_status=None, g
     dev_query = queries[0]
     gtw_query = queries[1]
     
-    # Execute the queries, filtering by asset type
-    if asset_type is None:
-        result = dev_query.all() + gtw_query.all()
-    elif asset_type == "device":
-        result = dev_query.all()
-    elif asset_type == "gateway":
-        result = gtw_query.all()
-    else:
-        raise Error.BadRequest("Invalid asset type parameter")
+    result = query_for_count(dev_query = dev_query, gtw_query = gtw_query, asset_type = asset_type)
 
     counts = defaultdict(lambda: {'name' : None, 'count' : 0})
     for row in result:
@@ -409,3 +377,18 @@ def add_filters(dev_query, gtw_query, asset_type=None, asset_status=None,
         ))
 
     return (dev_query, gtw_query)
+
+def query_for_count(dev_query, gtw_query, asset_type):
+    """
+    Helper function to execute the queries for
+    count methods, filtering by asset type
+    """
+    if asset_type is None:
+        result = dev_query.all() + gtw_query.all()
+    elif asset_type == "device":
+        result = dev_query.all()
+    elif asset_type == "gateway":
+        result = gtw_query.all()
+    else:
+        raise Error.BadRequest("Invalid asset type parameter")
+    return result
