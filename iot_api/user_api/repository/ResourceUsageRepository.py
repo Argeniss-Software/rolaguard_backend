@@ -138,13 +138,21 @@ def count_per_status(organization_id, asset_type=None, asset_status=None, gatewa
     result = query_for_count(dev_query = dev_query, gtw_query = gtw_query, asset_type = asset_type)
 
     # Join the results of the queries
-    counts = defaultdict(lambda: {'name' : None, 'count' : 0})
+    counts = {
+        'connected': {
+            'name': 'connected',
+            'count': 0
+        },
+        'disconnected': {
+            'name': 'disconnected',
+            'count': 0
+        }
+    }
     for row in result:
         if row.connected:
             status = 'connected'
         else:
             status = 'disconnected'
-        counts[status]['name'] = status
         counts[status]['count'] += row.count_result
 
     return [{'id' : k, 'name':v['name'], 'count':v['count']} for k, v in counts.items()]
