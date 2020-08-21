@@ -106,7 +106,7 @@ class ResourceUsagePerStatusCountAPI(Resource):
         - min_packet_loss: for filtering, count only the assets with packet loss not lower than this value (percentage)
         - max_packet_loss: for filtering, count only the assets with packet loss not higher than this value (percentage)
     Returns:
-        - A JSON with two integer fields: 'count_connected' and 'count_disconnected'
+        - A list of JSONs, where each JSON has three fields: id, name, count. (id = name = 'connected'/'disconnected')
     """
     @jwt_required
     def get(self):
@@ -139,7 +139,7 @@ class ResourceUsagePerGatewayCountAPI(Resource):
         - min_packet_loss: for filtering, count only the assets with packet loss not lower than this value (percentage)
         - max_packet_loss: for filtering, count only the assets with packet loss not higher than this value (percentage)
     Returns:
-        - A list of JSONs, where each JSON has three fields: id, hex_id, count.
+        - A list of JSONs, where each JSON has three fields: id, name, count. (name = hex_id)
     """
     @jwt_required
     def get(self):

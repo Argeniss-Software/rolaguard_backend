@@ -109,7 +109,7 @@ def count_per_status(organization_id, asset_type=None, asset_status=None, gatewa
         - min_packet_loss: for filtering, count only the assets with packet loss not lower than this value (percentage)
         - max_packet_loss: for filtering, count only the assets with packet loss not higher than this value (percentage)
     Returns:
-        - Dict with the keys 'count_connected' and 'count_disconnected'
+        - List of dicts, where each dict has the status id and name, and the count of assets (id = name = 'connected'/'disconnected')
     """
     dev_query = db.session.query(Device.connected, func.count(distinct(Device.id)).label("count_result")).\
         select_from(Device).\
@@ -146,16 +146,16 @@ def count_per_status(organization_id, asset_type=None, asset_status=None, gatewa
         raise Error.BadRequest("Invalid asset type parameter")
 
     # Join the results of the queries
-    response = dict([('count_connected', 0), ('count_disconnected', 0)])
+    counts = defaultdict(lambda: {'name' : None, 'count' : 0})
     for row in result:
-        log.debug(f"row: {row}")
         if row.connected:
-            status = 'count_connected'
+            status = 'connected'
         else:
-            status = 'count_disconnected'
-        response[status] += row.count_result
+            status = 'disconnected'
+        counts[status]['name'] = status
+        counts[status]['count'] += row.count_result
 
-    return response
+    return [{'id' : k, 'name':v['name'], 'count':v['count']} for k, v in counts.items()]
 
 def count_per_gateway(organization_id, asset_type=None, asset_status=None, gateway_ids=None,
                     min_signal_strength=None, max_signal_strength=None,
@@ -170,7 +170,7 @@ def count_per_gateway(organization_id, asset_type=None, asset_status=None, gatew
         - min_packet_loss: for filtering, count only the assets with packet loss not lower than this value (percentage)
         - max_packet_loss: for filtering, count only the assets with packet loss not higher than this value (percentage)
     Returns:
-        - List of dicts, where each dict has the gateway id and name, and the count of assets.
+        - List of dicts, where each dict has the gateway id and name, and the count of assets (name = hex_id)
     """
     # Query to count the number of devices per gateway
     dev_query = db.session.query(Gateway.id, Gateway.gw_hex_id, func.count(distinct(Device.id)).label("count_result")).\
@@ -207,12 +207,12 @@ def count_per_gateway(organization_id, asset_type=None, asset_status=None, gatew
     else:
         raise Error.BadRequest("Invalid asset type parameter")
 
-    counts = defaultdict(lambda: {'hex_id' : None, 'count' : 0})
+    counts = defaultdict(lambda: {'name' : None, 'count' : 0})
     for row in result:
-        counts[row.id]['hex_id'] = row.gw_hex_id
+        counts[row.id]['name'] = row.gw_hex_id
         counts[row.id]['count'] += row.count_result
 
-    return [{'id' : k, 'hex_id':v['hex_id'], 'count':v['count']} for k, v in counts.items()]
+    return [{'id' : k, 'name':v['name'], 'count':v['count']} for k, v in counts.items()]
     
 def add_filters(dev_query, gtw_query, asset_type=None, asset_status=None, 
                 gateway_ids=None, min_signal_strength=None, max_signal_strength=None,
