@@ -33,5 +33,6 @@ from .ResourceUsage import (
     ResourceUsageListAPI,
     ResourceUsagePerStatusCountAPI,
     ResourceUsagePerGatewayCountAPI,
-    ResourceUsagePerSignalStrengthCountAPI
+    ResourceUsagePerSignalStrengthCountAPI,
+    ResourceUsagePerPacketLossCountAPI
     )

@@ -227,7 +227,7 @@ def count_per_signal_strength(organization_id, asset_type=None, asset_status=Non
         - min_packet_loss: for filtering, count only the assets with packet loss not lower than this value (percentage)
         - max_packet_loss: for filtering, count only the assets with packet loss not higher than this value (percentage)
     Returns:
-        - List of dicts, where each dict has the range id and name, and the count of assets
+        - List of dicts, where each dict has the signal strength range id and name, and the count of assets
     """
 
     # For every 0 <= i <= 5, range_names[i] includes signal strength values in the range [L,R) = [range_limits[i], range_limits[i+1])
@@ -279,7 +279,86 @@ def count_per_signal_strength(organization_id, asset_type=None, asset_status=Non
     counts = defaultdict(lambda: {'name' : None, 'count' : 0})
     for row in result:
         if len(row) != len(range_names):
-            log.error(f"Length of range_names and length of row in query result don't match ({len(range_names)}, {len(row)})")
+            log.error(f"Length of range_names and length of row in signal strength query result don't match ({len(range_names)}, {len(row)})")
+            raise Exception()
+        for i in range(0, len(row)):
+            name = range_names[i]
+            L = range_limits[i]
+            R = range_limits[i+1]
+            counts[(L,R)]['name'] = name
+            counts[(L,R)]['count'] += row[i]
+
+    return [{'id' : k, 'name':v['name'], 'count':v['count']} for k, v in counts.items()]
+
+def count_per_packet_loss(organization_id, asset_type=None, asset_status=None, gateway_ids=None,
+                    min_signal_strength=None, max_signal_strength=None,
+                    min_packet_loss=None, max_packet_loss=None):
+    """ Count assets (devices+gateways) grouped by specific ranges of signal strength values
+    Parameters: 
+        - asset_type: for filtering, count only this type of asset ("device" or "gateway").
+        - asset_status: for filtering, count only assets with this status ("connected" or "disconnected").
+        - gateway_ids[]: for filtering, count only the assets connected to ANY one of these gateways.
+        - min_signal_strength: for filtering, count only the assets with signal strength not lower than this value (dBm)
+        - max_signal_strength: for filtering, count only the assets with signal strength not higher than this value (dBm)
+        - min_packet_loss: for filtering, count only the assets with packet loss not lower than this value (percentage)
+        - max_packet_loss: for filtering, count only the assets with packet loss not higher than this value (percentage)
+    Returns:
+        - List of dicts, where each dict has the packet loss range id and name, and the count of assets
+    """
+
+    # The packet loss ranges are defined as [L,R) = [range_limits[i], range_limits[i+1]) for every 0 <= i <= 9
+    range_limits = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 101]
+    range_names = ['[0,10)', '[10,20)', '[20,30)', '[30,40)', '[40,50)', '[50,60)', '[60,70)', '[70,80)', '[80,90)', '[90,100]']
+    dev_query = db.session.query()
+    gtw_query = db.session.query()
+    for i in range(0, len(range_names)):
+        name = range_names[i]
+        L = range_limits[i]
+        R = range_limits[i+1]
+        dev_query = dev_query.add_column(func.count(distinct(Device.id)).filter(and_(
+            Device.npackets_lost != null(),
+            Device.npackets_up + Device.npackets_down > 0,
+            L <= 100*Device.npackets_up*Device.npackets_lost \
+                /(Device.npackets_up*(1+Device.npackets_lost) + Device.npackets_down),
+            R > 100*Device.npackets_up*Device.npackets_lost \
+                /(Device.npackets_up*(1+Device.npackets_lost) + Device.npackets_down)
+            )).label(name))
+        
+        # Gateways are not considered because they don't have the loss value
+        gtw_query = gtw_query.add_column(expression.literal_column("0").label(name))
+
+    dev_query = dev_query.\
+        select_from(Device).\
+        join(GatewayToDevice).\
+        filter(Device.organization_id==organization_id)
+
+    queries = add_filters(
+        dev_query = dev_query,
+        gtw_query = gtw_query,
+        asset_type = asset_type,
+        asset_status = asset_status,
+        gateway_ids = gateway_ids,
+        min_signal_strength = min_signal_strength,
+        max_signal_strength = max_signal_strength,
+        min_packet_loss = min_packet_loss,
+        max_packet_loss = max_packet_loss)    
+    dev_query = queries[0]
+    gtw_query = queries[1]
+    
+    # Execute the queries, filtering by asset type
+    if asset_type is None:
+        result = dev_query.all() + gtw_query.all()
+    elif asset_type == "device":
+        result = dev_query.all()
+    elif asset_type == "gateway":
+        result = gtw_query.all()
+    else:
+        raise Error.BadRequest("Invalid asset type parameter")
+
+    counts = defaultdict(lambda: {'name' : None, 'count' : 0})
+    for row in result:
+        if len(row) != len(range_names):
+            log.error(f"Length of range_names and length of row in packet loss query result don't match ({len(range_names)}, {len(row)})")
             raise Exception()
         for i in range(0, len(row)):
             name = range_names[i]
