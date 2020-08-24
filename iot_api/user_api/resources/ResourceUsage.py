@@ -116,7 +116,7 @@ class ResourceUsagePerStatusCountAPI(Resource):
             raise Error.Forbidden()
         organization_id = user.organization_id
 
-        response = ResourceUsageRepository.count_per_status(
+        groups = ResourceUsageRepository.count_per_status(
             organization_id = organization_id,
             asset_type = request.args.get('asset_type', default=None, type=str),
             asset_status = request.args.get('asset_status', default=None, type=str),
@@ -126,7 +126,10 @@ class ResourceUsagePerStatusCountAPI(Resource):
             min_packet_loss = request.args.get('min_packet_loss', default = None, type=int),
             max_packet_loss = request.args.get('max_packet_loss', default = None, type=int)
         )
-        return response, 200
+        return {
+            'total_count': sum(group['count'] for group in groups),
+            'groups': groups
+        }, 200
 
 class ResourceUsagePerGatewayCountAPI(Resource):
     """ Endpoint to count assets (devices+gateways) grouped by gateway.
@@ -149,7 +152,7 @@ class ResourceUsagePerGatewayCountAPI(Resource):
             raise Error.Forbidden()
         organization_id = user.organization_id
 
-        response = ResourceUsageRepository.count_per_gateway(
+        groups = ResourceUsageRepository.count_per_gateway(
             organization_id = organization_id,
             asset_type = request.args.get('asset_type', default=None, type=str),
             asset_status = request.args.get('asset_status', default=None, type=str),
@@ -159,7 +162,10 @@ class ResourceUsagePerGatewayCountAPI(Resource):
             min_packet_loss = request.args.get('min_packet_loss', default = None, type=int),
             max_packet_loss = request.args.get('max_packet_loss', default = None, type=int)
         )
-        return response, 200
+        return {
+            'total_count': sum(group['count'] for group in groups),
+            'groups': groups
+        }, 200
 
 class ResourceUsagePerSignalStrengthCountAPI(Resource):
     """ Endpoint to count assets (devices+gateways) grouped by signal strength.
@@ -188,7 +194,7 @@ class ResourceUsagePerSignalStrengthCountAPI(Resource):
             raise Error.Forbidden()
         organization_id = user.organization_id
 
-        response = ResourceUsageRepository.count_per_signal_strength(
+        groups = ResourceUsageRepository.count_per_signal_strength(
             organization_id = organization_id,
             asset_type = request.args.get('asset_type', default=None, type=str),
             asset_status = request.args.get('asset_status', default=None, type=str),
@@ -199,13 +205,16 @@ class ResourceUsagePerSignalStrengthCountAPI(Resource):
             max_packet_loss = request.args.get('max_packet_loss', default = None, type=int)
         )
         # Make the ids a JSON object instead of a tuple
-        for signal_range in response:
+        for signal_range in groups:
             signal_range['id'] = {
                 'min_signal_strength': signal_range['id'][0],
                 'max_signal_strength': signal_range['id'][1]
             }
 
-        return response, 200
+        return {
+            'total_count': sum(group['count'] for group in groups),
+            'groups': groups
+        }, 200
 
 class ResourceUsagePerPacketLossCountAPI(Resource):
     """ Endpoint to count assets (devices+gateways) grouped by packet loss percentage
@@ -234,7 +243,7 @@ class ResourceUsagePerPacketLossCountAPI(Resource):
             raise Error.Forbidden()
         organization_id = user.organization_id
 
-        response = ResourceUsageRepository.count_per_packet_loss(
+        groups = ResourceUsageRepository.count_per_packet_loss(
             organization_id = organization_id,
             asset_type = request.args.get('asset_type', default=None, type=str),
             asset_status = request.args.get('asset_status', default=None, type=str),
@@ -245,10 +254,13 @@ class ResourceUsagePerPacketLossCountAPI(Resource):
             max_packet_loss = request.args.get('max_packet_loss', default = None, type=int)
         )
         # Make the ids a JSON object instead of a tuple
-        for loss_range in response:
+        for loss_range in groups:
             loss_range['id'] = {
                 'min_packet_loss': loss_range['id'][0],
                 'max_packet_loss': loss_range['id'][1]
             }
 
-        return response, 200
+        return {
+            'total_count': sum(group['count'] for group in groups),
+            'groups': groups
+        }, 200
