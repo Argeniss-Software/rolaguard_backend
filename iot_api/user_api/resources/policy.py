@@ -10,6 +10,7 @@ from iot_api.user_api.model import User, AlertType
 from iot_api.user_api.models.Policy import Policy
 from iot_api.user_api.models.DataCollector import DataCollector
 from iot_api.user_api.models.PolicyItem import PolicyItem
+from iot_api.user_api.repository import PolicyRepository
 
 from iot_api.user_api.schemas.policy_schema import PolicySchema, UpdatedPolicySchema
 
@@ -126,6 +127,10 @@ class PolicyResource(Resource):
         
         if policy.organization_id is not None and policy.organization_id != organization_id:
             return [{'code': 'FORBIDDEN', 'message': 'Can\'t fetch the policy.'}], 403
+
+        existing_type_codes = [item.alert_type_code for item in policy.items]
+        if PolicyRepository.add_missing_items(id, existing_type_codes):
+            policy = Policy.find_one(id, organization_id)
 
         return policy.to_dict()
 
