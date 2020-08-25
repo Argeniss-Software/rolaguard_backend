@@ -6,7 +6,7 @@ from sqlalchemy.sql import select, expression, text
 
 from iot_api.user_api import db
 from iot_api.user_api.repository import DeviceRepository, GatewayRepository
-from iot_api.user_api.model import Device, Gateway, DataCollectorToDevice, GatewayToDevice
+from iot_api.user_api.model import Device, Gateway, GatewayToDevice
 from iot_api.user_api.models import DataCollector
 from iot_api.user_api import Error
 
@@ -41,7 +41,7 @@ def list_all(organization_id, page=None, size=None,
         Device.npackets_lost.label('packet_loss'),
         Device.max_rssi
         ).select_from(Device).\
-            join(DataCollectorToDevice).join(DataCollector).\
+            join(DataCollector).\
             join(GatewayToDevice).\
             filter(Device.organization_id==organization_id)
     gtw_query = db.session.query(
@@ -69,7 +69,7 @@ def list_all(organization_id, page=None, size=None,
         dev_query = dev_query.filter(GatewayToDevice.gateway_id.in_(gateway_ids))
         gtw_query = gtw_query.filter(Gateway.id.in_(gateway_ids))
     if data_collector_ids:
-        dev_query = dev_query.filter(DataCollectorToDevice.data_collector_id.in_(data_collector_ids))
+        dev_query = dev_query.filter(Device.data_collector_id.in_(data_collector_ids))
         gtw_query = gtw_query.filter(Gateway.data_collector_id.in_(data_collector_ids))
 
     # Filter by device type if the parameter was given, else, make a union with queries.
