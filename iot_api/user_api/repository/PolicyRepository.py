@@ -1,4 +1,4 @@
-import iot_logging
+import iot_logging, json
 LOG = iot_logging.getLogger(__name__)
 
 from sqlalchemy import not_
@@ -18,10 +18,13 @@ def add_missing_items(policy_id, existing_type_codes):
         return False
     
     for alert_type in missing_alert_types:
+        parameters = json.loads(alert_type.parameters)
+        parameters = {par : val['default'] for par, val in parameters.items()}
         db.session.add(PolicyItem(
             policy_id=policy_id,
             alert_type_code=alert_type.code,
             enabled=True,
-            parameters=alert_type.parameters))
+            parameters=json.dumps(parameters)))
+            
     db.session.commit()
     return True
