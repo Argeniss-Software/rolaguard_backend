@@ -37,6 +37,11 @@ class PolicyListResource(Resource):
 
         result = Policy.find_with_collectors(organization_id, None, None, page, size)
         headers = {'total-pages': result.pages, 'total-items': result.total}
+
+        for policy in result.items:
+            existing_type_codes = [item.alert_type_code for item in policy.items]
+            PolicyRepository.add_missing_items(policy.id, existing_type_codes)
+
         policies = [policy.to_dict() for policy in result.items]
 
         return policies, 200, headers
@@ -127,10 +132,6 @@ class PolicyResource(Resource):
         
         if policy.organization_id is not None and policy.organization_id != organization_id:
             return [{'code': 'FORBIDDEN', 'message': 'Can\'t fetch the policy.'}], 403
-
-        existing_type_codes = [item.alert_type_code for item in policy.items]
-        if PolicyRepository.add_missing_items(id, existing_type_codes):
-            policy = Policy.find_one(id, organization_id)
 
         return policy.to_dict()
 
