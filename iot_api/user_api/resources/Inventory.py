@@ -9,7 +9,6 @@ import iot_logging
 log = iot_logging.getLogger(__name__)
 
 from iot_api.user_api.model import User, Alert, Quarantine, GatewayToDevice, AlertType, AssetImportance
-from iot_api.user_api.models.DataCollector import DataCollector
 from iot_api.user_api.Utils import is_system
 from iot_api.user_api.JwtUtils import admin_regular_allowed
 from iot_api.user_api.repository import AssetRepository, TagRepository
