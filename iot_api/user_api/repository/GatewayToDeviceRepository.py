@@ -4,7 +4,7 @@ from iot_api.user_api.model import GatewayToDevice
 
 def find_all_with(gateway_id=None, device_id=None): 
     if (not gateway_id and not device_id):
-        raise Error.BadRequest(f"Either device or gateway id is required")
+        raise Error.BadRequest("Either device or gateway id is required")
     query = db.session.query(GatewayToDevice)
     if gateway_id:
         query = query.filter(GatewayToDevice.gateway_id == gateway_id)
