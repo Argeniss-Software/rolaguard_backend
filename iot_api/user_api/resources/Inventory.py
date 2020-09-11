@@ -57,7 +57,8 @@ class AssetInformationAPI(Resource):
             connected_gw_ids = [gw_to_device.gateway_id for gw_to_device in GatewayToDeviceRepository.find_all_with(device_id=asset.id)]
             connected_gws = [AssetRepository.get_with(gw_id, 'gateway', organization_id) for gw_id in connected_gw_ids]
             response['location'] = [{
-                getattr(gw, 'hex_id'): {
+                getattr(gw, 'id'): {
+                    'hex_id': getattr(gw, 'hex_id'),
                     'latitude': getattr(gw, 'location_latitude', None),
                     'longitude': getattr(gw, 'location_longitude', None)
                 }
