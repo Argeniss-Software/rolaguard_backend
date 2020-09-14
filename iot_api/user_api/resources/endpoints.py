@@ -29,12 +29,13 @@ from iot_api.user_api.events.data_collector_events import emit_data_collector_ev
 from iot_api.user_api.events.policy_events import emit_policy_event
 from iot_api.user_api.model import User, Organization, Device, RevokedTokenModel, AccountActivation, StatsCounters, \
     PasswordReset, LoginAttempts, UserRole, UserToUserRole, Alert, AlertType, Packet, \
-    SendMailAttempts, GlobalData, \
+    SendMailAttempts, \
     get_user_collector_ids
 from iot_api.user_api.models.ChangeEmailRequests import ChangeEmailRequests
 from iot_api.user_api.models.DataCollector import DataCollector, DataCollectorStatus
 from iot_api.user_api.models.DataCollectorLogEvent import DataCollectorLogEvent, DataCollectorLogEventType
 from iot_api.user_api.models.DataCollectorType import DataCollectorType
+from iot_api.user_api.models.GlobalData import GlobalData
 from iot_api.user_api.models.MqttTopic import MqttTopic
 from iot_api.user_api.models.NotificationAlertSettings import NotificationAlertSettings
 from iot_api.user_api.models.NotificationData import NotificationData
