@@ -30,23 +30,18 @@ from iot_api.user_api.events.policy_events import emit_policy_event
 from iot_api.user_api.model import User, Organization, Device, AccountActivation, \
     UserRole, UserToUserRole, Alert, AlertType, Packet, \
     get_user_collector_ids
-from iot_api.user_api.models.ChangeEmailRequests import ChangeEmailRequests
+from iot_api.user_api.models import ChangeEmailRequests, GlobalData, LoginAttempts, PasswordReset, \
+    RevokedTokenModel, SendMailAttempts, StatsCounters
 from iot_api.user_api.models.DataCollector import DataCollector, DataCollectorStatus
 from iot_api.user_api.models.DataCollectorLogEvent import DataCollectorLogEvent, DataCollectorLogEventType
 from iot_api.user_api.models.DataCollectorType import DataCollectorType
-from iot_api.user_api.models.GlobalData import GlobalData
-from iot_api.user_api.models.LoginAttempts import LoginAttempts
 from iot_api.user_api.models.MqttTopic import MqttTopic
 from iot_api.user_api.models.NotificationAlertSettings import NotificationAlertSettings
 from iot_api.user_api.models.NotificationData import NotificationData
 from iot_api.user_api.models.NotificationDataCollectorSettings import NotificationDataCollectorSettings
 from iot_api.user_api.models.NotificationPreferences import NotificationPreferences
-from iot_api.user_api.models.PasswordReset import PasswordReset
 from iot_api.user_api.models.Policy import Policy
 from iot_api.user_api.model import Quarantine
-from iot_api.user_api.models.RevokedTokenModel import RevokedTokenModel
-from iot_api.user_api.models.SendMailAttempts import SendMailAttempts
-from iot_api.user_api.models.StatsCounters import StatsCounters
 from iot_api.user_api.singletonURL import singletonURL
 
 from urllib.parse import urlencode
