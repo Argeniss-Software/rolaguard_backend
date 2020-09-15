@@ -843,6 +843,30 @@ class GatewayToDevice(db.Model):
     device_id = Column(BigInteger, db.ForeignKey("device.id"), nullable=False, primary_key=True)
 
 
+class DeviceSession(db.Model):
+    __tablename__ = 'device_session'
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    may_be_abp = Column(Boolean, nullable=True)
+    reset_counter = Column(Integer, nullable=False, default=0)
+    is_confirmed = Column(Boolean, nullable=True)
+    dev_addr = Column(String(8), nullable=False)
+    up_link_counter = Column(Integer, nullable=False, default=-1)
+    down_link_counter = Column(Integer, nullable=False, default=-1)
+    max_down_counter = Column(Integer, nullable=False, default=-1)
+    max_up_counter = Column(Integer, nullable=False, default=-1)
+    total_down_link_packets = Column(BigInteger, nullable=False, default=0)
+    total_up_link_packets = Column(BigInteger, nullable=False, default=0)
+    first_down_timestamp = Column(DateTime(timezone=True), nullable=True)
+    first_up_timestamp = Column(DateTime(timezone=True), nullable=True)
+    last_down_timestamp = Column(DateTime(timezone=True), nullable=True)
+    last_up_timestamp = Column(DateTime(timezone=True), nullable=True)
+    device_id = Column(BigInteger, ForeignKey("device.id"), nullable=True)
+    organization_id = Column(BigInteger, ForeignKey("organization.id"), nullable=False)
+    data_collector_id = Column(BigInteger, db.ForeignKey("data_collector.id"), nullable=False)
+    device_auth_data_id = Column(BigInteger, ForeignKey("device_auth_data.id"), nullable=True)
+    last_packet_id = Column(BigInteger, ForeignKey("packet.id"), nullable=True)
+
+
 class Packet(db.Model):
     __tablename__ = 'packet'
     id = Column(BigInteger, primary_key=True, autoincrement=True)
@@ -975,6 +999,20 @@ class Packet(db.Model):
         query = query.filter(cls.date > min_date, cls.organization_id == organization_id)
         query = query.group_by(cls.data_collector_id)
         return query.all()
+
+
+class DeviceAuthData(db.Model):
+    __tablename__ = 'device_auth_data'
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    join_request = Column(String(200), nullable=True)
+    join_accept = Column(String(200), nullable=True)
+    apps_key = Column(String(32), nullable=True)
+    nwks_key = Column(String(32), nullable=True)
+    data_collector_id = Column(BigInteger, ForeignKey("data_collector.id"), nullable=False)
+    organization_id = Column(BigInteger, ForeignKey("organization.id"), nullable=False)
+    app_key_id = Column(BigInteger, ForeignKey("app_key.id"), nullable=False)
+    device_id = Column(BigInteger, ForeignKey("device.id"), nullable=True)
+    device_session_id = Column(BigInteger, ForeignKey("device_session.id"), nullable=True)
 
 
 class Params(db.Model):
