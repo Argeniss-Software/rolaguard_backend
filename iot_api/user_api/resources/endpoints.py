@@ -27,7 +27,7 @@ from iot_api import config
 from iot_api.user_api.enums import RoleTypes
 from iot_api.user_api.events.data_collector_events import emit_data_collector_event
 from iot_api.user_api.events.policy_events import emit_policy_event
-from iot_api.user_api.model import User, Organization, Device, AccountActivation, StatsCounters, \
+from iot_api.user_api.model import User, Organization, Device, AccountActivation, \
     UserRole, UserToUserRole, Alert, AlertType, Packet, \
     get_user_collector_ids
 from iot_api.user_api.models.ChangeEmailRequests import ChangeEmailRequests
@@ -46,6 +46,7 @@ from iot_api.user_api.models.Policy import Policy
 from iot_api.user_api.model import Quarantine
 from iot_api.user_api.models.RevokedTokenModel import RevokedTokenModel
 from iot_api.user_api.models.SendMailAttempts import SendMailAttempts
+from iot_api.user_api.models.StatsCounters import StatsCounters
 from iot_api.user_api.singletonURL import singletonURL
 
 from urllib.parse import urlencode
