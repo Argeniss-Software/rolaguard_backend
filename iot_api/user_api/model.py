@@ -373,38 +373,6 @@ class PasswordReset(db.Model):
         return cls.query.filter_by(user_id=user_id, active=True).all()
     
 
-class LoginAttempts(db.Model):
-    __tablename__ = "login_attempts"
-
-    id = db.Column(db.BigInteger, primary_key=True)
-    user_id = db.Column(db.BigInteger, db.ForeignKey("iot_user.id"), nullable=False)
-    attempts = db.Column(db.Integer, nullable=False, default=True)
-    last_attempt = db.Column(db.DateTime(timezone=True), nullable=False)
-
-    def to_json(self):
-        return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'attempts': self.attempts,
-            'last_attempt': self.last_attempt
-        }
-
-    def save_to_db(self):
-        db.session.add(self)
-        db.session.commit()
-
-    def update_to_db(self):
-        db.session.commit()
-
-    def delete_from_db(self):
-        db.session.delete(self)
-        db.session.commit()
-
-    @classmethod
-    def find_by_user(cls, user_id):
-        return cls.query.filter_by(user_id=user_id).first()
-
-
 class AlertType(db.Model):
     __tablename__ = 'alert_type'
     id = Column(BigInteger, primary_key=True, autoincrement=True)

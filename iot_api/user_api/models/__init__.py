@@ -20,3 +20,4 @@ from iot_api.user_api.models.NotificationAssetTag import NotificationAssetTag
 from iot_api.user_api.models.AppKey import AppKey
 from iot_api.user_api.models.ChangeEmailRequests import ChangeEmailRequests
 from iot_api.user_api.models.GlobalData import GlobalData
+from iot_api.user_api.models.LoginAttempts import LoginAttempts

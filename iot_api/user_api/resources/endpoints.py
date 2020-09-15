@@ -28,7 +28,7 @@ from iot_api.user_api.enums import RoleTypes
 from iot_api.user_api.events.data_collector_events import emit_data_collector_event
 from iot_api.user_api.events.policy_events import emit_policy_event
 from iot_api.user_api.model import User, Organization, Device, RevokedTokenModel, AccountActivation, StatsCounters, \
-    PasswordReset, LoginAttempts, UserRole, UserToUserRole, Alert, AlertType, Packet, \
+    PasswordReset, UserRole, UserToUserRole, Alert, AlertType, Packet, \
     SendMailAttempts, \
     get_user_collector_ids
 from iot_api.user_api.models.ChangeEmailRequests import ChangeEmailRequests
@@ -36,6 +36,7 @@ from iot_api.user_api.models.DataCollector import DataCollector, DataCollectorSt
 from iot_api.user_api.models.DataCollectorLogEvent import DataCollectorLogEvent, DataCollectorLogEventType
 from iot_api.user_api.models.DataCollectorType import DataCollectorType
 from iot_api.user_api.models.GlobalData import GlobalData
+from iot_api.user_api.models.LoginAttempts import LoginAttempts
 from iot_api.user_api.models.MqttTopic import MqttTopic
 from iot_api.user_api.models.NotificationAlertSettings import NotificationAlertSettings
 from iot_api.user_api.models.NotificationData import NotificationData
