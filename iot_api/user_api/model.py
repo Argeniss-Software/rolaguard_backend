@@ -520,17 +520,13 @@ class Alert(db.Model):
         if risks and len(risks) > 0:
             query = query.filter(AlertType.code == cls.type).filter(AlertType.risk.in_(risks))
 
-        #Get only alerts that correlate with the value of the param alert_asset_type
+        #Get only alerts of types that correlates with the value of the param alert_asset_type
         if alert_asset_type == AlertAssetType.BOTH:
             valid_types = [AlertAssetType.BOTH, AlertAssetType.DEVICE, AlertAssetType.GATEWAY]
-        elif alert_asset_type == AlertAssetType.DEVICE:
-            valid_types = [AlertAssetType.BOTH, AlertAssetType.DEVICE]
-        elif alert_asset_type == AlertAssetType.GATEWAY:
-            valid_types = [AlertAssetType.BOTH, AlertAssetType.GATEWAY]
-        elif alert_asset_type == AlertAssetType.NONE:
-            valid_types = [AlertAssetType.NONE]
-        elif alert_asset_type == AlertAssetType.LOOK_IN_ALERT_PARAMS:
-            valid_types = [AlertAssetType.LOOK_IN_ALERT_PARAMS]
+        elif alert_asset_type == AlertAssetType.DEVICE or alert_asset_type == AlertAssetType.GATEWAY:
+            valid_types = [AlertAssetType.BOTH, alert_asset_type]
+        else:
+            valid_types = [alert_asset_type]
 
         subquery = db.session.query(func.count(distinct(AlertType.code)))\
             .filter(AlertType.code == cast(Alert.parameters, JSON)['alert_solved_type'].as_string())\
