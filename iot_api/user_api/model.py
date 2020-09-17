@@ -540,8 +540,6 @@ class Alert(db.Model):
             )
         ))
 
-        LOG.debug(f"subquery scalar: {subquery.scalar()}, {subquery}")
-
         if order_by:
             order_field = order_by[0]
             order_direction = order_by[1]
