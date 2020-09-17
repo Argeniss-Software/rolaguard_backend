@@ -494,11 +494,17 @@ class Alert(db.Model):
 
     @classmethod
     def find_with(cls, organization_id, since, until, types, resolved, risks, order_by, page, size, device_id=None, gateway_id=None, alert_asset_type = AlertAssetType.BOTH):
+        AlertTypeExplicit = db.aliased(AlertType)
+        AlertTypeImplicit = db.aliased(AlertType)
+
         query = db.session.query(Alert)\
                 .join(DataCollector)\
-                .join(AlertType)\
+                .join(AlertTypeExplicit, AlertTypeExplicit.code == Alert.type)\
+                .join(AlertTypeImplicit, or_(
+                    AlertTypeImplicit.code == AlertTypeExplicit.code,
+                    AlertTypeImplicit.code == cast(Alert.parameters, JSON)['alert_solved_type'].as_string(),
+                ))\
                 .filter(DataCollector.organization_id == organization_id)\
-                .filter(AlertType.code == Alert.type)\
                 .filter(cls.show == True)
 
         if device_id is not None:
@@ -518,7 +524,7 @@ class Alert(db.Model):
             else:
                 query = query.filter(cls.resolved_at == None)
         if risks and len(risks) > 0:
-            query = query.filter(AlertType.code == cls.type).filter(AlertType.risk.in_(risks))
+            query = query.filter(AlertTypeExplicit.risk.in_(risks))
 
         #Get only alerts of types that correlates with the value of the param alert_asset_type
         if alert_asset_type == AlertAssetType.BOTH:
@@ -528,15 +534,11 @@ class Alert(db.Model):
         else:
             valid_types = [alert_asset_type]
 
-        subquery = db.session.query(func.count(distinct(AlertType.code)))\
-            .filter(AlertType.code == cast(Alert.parameters, JSON)['alert_solved_type'].as_string())\
-            .filter(AlertType.for_asset_type.in_(valid_types))\
-            .correlate(Alert)
         query = query.filter(or_(
-            AlertType.for_asset_type.in_(valid_types),
+            AlertTypeExplicit.for_asset_type.in_(valid_types),
             and_(
-                AlertType.for_asset_type == AlertAssetType.LOOK_IN_ALERT_PARAMS,
-                subquery.scalar() == 1
+                AlertTypeExplicit.for_asset_type == AlertAssetType.LOOK_IN_ALERT_PARAMS,
+                AlertTypeImplicit.for_asset_type.in_(valid_types)
             )
         ))
 
