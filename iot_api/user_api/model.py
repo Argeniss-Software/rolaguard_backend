@@ -1,6 +1,7 @@
 from iot_api import bcrypt
 from iot_api.user_api.enums import RoleTypes
 from iot_api.user_api.models.DataCollector import *
+from iot_api.user_api import Error
 from iot_api import config
 
 from sqlalchemy import Table, Column, ForeignKey, func, desc, asc, cast, case, and_, or_, distinct, \
@@ -493,9 +494,18 @@ class Alert(db.Model):
             LOG.error(e)
 
     @classmethod
-    def find_with(cls, organization_id, since, until, types, resolved, risks, order_by, page, size, device_id=None, gateway_id=None, alert_asset_type = AlertAssetType.BOTH):
+    def find_with(cls, organization_id, since, until, types, resolved, risks, order_by, page, size, device_id=None, gateway_id=None, asset_type=None):
         AlertTypeExplicit = db.aliased(AlertType)
         AlertTypeImplicit = db.aliased(AlertType)
+
+        if asset_type == 'device':
+            alert_asset_type = AlertAssetType.DEVICE
+        elif asset_type == 'gateway':
+            alert_asset_type = AlertAssetType.GATEWAY
+        elif asset_type is None:
+            alert_asset_type = AlertAssetType.BOTH
+        else:
+            raise Error.BadRequest(f"Alert.find_with called with asset_type = {asset_type}")
 
         query = db.session.query(Alert)\
                 .join(DataCollector)\
@@ -1139,14 +1149,21 @@ class Quarantine(db.Model):
         return query
 
     @classmethod
-    def find(cls, organization_id, since, until, alert_types, devices, risks, data_collectors, order_by, page, size, gateway_id = None, alert_asset_type = None):
+    def find(cls, organization_id, since, until, alert_types, devices, risks, data_collectors, order_by, page, size, gateway_id=None, asset_type=None):
         query = cls.get_list_query(organization_id, since, until, alert_types, devices, risks, data_collectors)
 
         if gateway_id is not None:
             query = query.filter(Alert.gateway_id == gateway_id)
 
         #Get only issues of alerts whose type correlates with the value of the param alert_asset_type
-        if alert_asset_type is not None:
+        if asset_type is not None:
+            if asset_type == 'device':
+                alert_asset_type = AlertAssetType.DEVICE
+            elif asset_type == 'gateway':
+                alert_asset_type = AlertAssetType.GATEWAY
+            else:
+                raise Error.BadRequest(f"Quarantine.find called with asset_type = {asset_type}")
+
             if alert_asset_type == AlertAssetType.BOTH:
                 valid_types = [AlertAssetType.BOTH, AlertAssetType.DEVICE, AlertAssetType.GATEWAY]
             elif alert_asset_type == AlertAssetType.DEVICE or alert_asset_type == AlertAssetType.GATEWAY:

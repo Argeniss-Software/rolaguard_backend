@@ -156,7 +156,7 @@ class AssetAlertsAPI(Resource):
                 order_by=order_by,
                 page=page,
                 size=size,
-                alert_asset_type=AlertAssetType.DEVICE
+                asset_type=asset_type
             )
         else:
             results = Alert.find_with(
@@ -170,7 +170,7 @@ class AssetAlertsAPI(Resource):
                 order_by=order_by,
                 page=page,
                 size=size,
-                alert_asset_type=AlertAssetType.GATEWAY
+                asset_type=asset_type
             )
 
         alerts = [{
@@ -270,7 +270,7 @@ class AssetIssuesAPI(Resource):
                 until=until,
                 alert_types=[AlertType.find_one(alert_type_code).id for alert_type_code in alert_types],
                 devices=[asset.id],
-                alert_asset_type = AlertAssetType.DEVICE,
+                asset_type=asset_type,
                 risks=risks,
                 data_collectors=None,
                 order_by=order_by,
@@ -285,7 +285,7 @@ class AssetIssuesAPI(Resource):
                 alert_types=[AlertType.find_one(alert_type_code).id for alert_type_code in alert_types],
                 devices=None,
                 gateway_id=asset.id,
-                alert_asset_type = AlertAssetType.GATEWAY,
+                asset_type=asset_type,
                 risks=risks,
                 data_collectors=None,
                 order_by=order_by,
