@@ -1139,21 +1139,31 @@ class Quarantine(db.Model):
         return query
 
     @classmethod
-    def find(cls, organization_id, since, until, alert_types, devices, risks, data_collectors, order_by, page, size, gateway_id = None):
+    def find(cls, organization_id, since, until, alert_types, devices, risks, data_collectors, order_by, page, size, gateway_id = None, alert_asset_type = None):
         query = cls.get_list_query(organization_id, since, until, alert_types, devices, risks, data_collectors)
 
         if gateway_id is not None:
+            query = query.filter(Alert.gateway_id == gateway_id)
+
+        #Get only issues of alerts whose type correlates with the value of the param alert_asset_type
+        if alert_asset_type is not None:
+            if alert_asset_type == AlertAssetType.BOTH:
+                valid_types = [AlertAssetType.BOTH, AlertAssetType.DEVICE, AlertAssetType.GATEWAY]
+            elif alert_asset_type == AlertAssetType.DEVICE or alert_asset_type == AlertAssetType.GATEWAY:
+                valid_types = [AlertAssetType.BOTH, alert_asset_type]
+            else:
+                valid_types = [alert_asset_type]
+
             AlertTypeImplicit = db.aliased(AlertType)
             query = query.join(AlertTypeImplicit, or_(
                         AlertTypeImplicit.code == AlertType.code,
                         AlertTypeImplicit.code == cast(Alert.parameters, JSON)['alert_solved_type'].as_string(),
                     ))\
-                    .filter(Alert.gateway_id == gateway_id)\
                     .filter(or_(
-                        AlertType.for_asset_type.in_([AlertAssetType.BOTH, AlertAssetType.GATEWAY]),
+                        AlertType.for_asset_type.in_(valid_types),
                         and_(
                             AlertType.for_asset_type == AlertAssetType.LOOK_IN_ALERT_PARAMS,
-                            AlertTypeImplicit.for_asset_type.in_([AlertAssetType.BOTH, AlertAssetType.GATEWAY])
+                            AlertTypeImplicit.for_asset_type.in_(valid_types)
                         )
                     ))
 
