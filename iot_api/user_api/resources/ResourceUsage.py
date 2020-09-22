@@ -20,8 +20,8 @@ class ResourceUsageInformationAPI(Resource):
         - asset_id (required): database id of the asset
         - min_rssi: for filtering packets list, return only packets with rssi not lower than this value
         - max_rssi: for filtering packets list, return only packets with rssi not higher than this value
-        - min_snr: for filtering packets list, return only packets with snr not lower than this value
-        - max_snr: for filtering packets list, return only packets with snr not higher than this value
+        - min_lsnr: for filtering packets list, return only packets with lsnr not lower than this value
+        - max_lsnr: for filtering packets list, return only packets with lsnr not higher than this value
     Returns:
         - JSON with requested resource usage information.
     """
@@ -45,8 +45,8 @@ class ResourceUsageInformationAPI(Resource):
                     ids_list=json.loads(asset.last_packets_list),
                     min_rssi = request.args.get('min_rssi', default = None, type=int),
                     max_rssi = request.args.get('max_rssi', default = None, type=int),
-                    min_snr = request.args.get('min_snr', default = None, type=float),
-                    max_snr = request.args.get('max_snr', default = None, type=float)
+                    min_lsnr = request.args.get('min_lsnr', default = None, type=float),
+                    max_lsnr = request.args.get('max_lsnr', default = None, type=float)
                 )
             packets = []
             for packet, gw_id in temp_packets:
@@ -77,8 +77,8 @@ class ResourceUsageInformationAPI(Resource):
                 "color": tag.color
             } for tag in TagRepository.list_asset_tags(asset_id, asset_type, organization_id)],
             'last_packets_list': packets,
-            'min_snr_packets': min([packet['lsnr'] for packet in packets]),
-            'max_snr_packets': max([packet['lsnr'] for packet in packets]),
+            'min_lsnr_packets': min([packet['lsnr'] for packet in packets]),
+            'max_lsnr_packets': max([packet['lsnr'] for packet in packets]),
             'min_rssi_packets': min([packet['rssi'] for packet in packets]),
             'max_rssi_packets': max([packet['rssi'] for packet in packets])
         }
