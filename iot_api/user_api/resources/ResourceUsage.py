@@ -16,8 +16,12 @@ from iot_api.user_api import Error
 class ResourceUsageInformationAPI(Resource):
     """ Endpoint to get the resource usage of an asset of a given type
     Request parameters:
-        - asset_type: type of requested asset (can be device or gateway).
-        - asset_id: database id of the asset
+        - asset_type (required): type of requested asset (can be device or gateway).
+        - asset_id (required): database id of the asset
+        - min_rssi: for filtering packets list, return only packets with rssi not lower than this value
+        - max_rssi: for filtering packets list, return only packets with rssi not higher than this value
+        - min_snr: for filtering packets list, return only packets with snr not lower than this value
+        - max_snr: for filtering packets list, return only packets with snr not higher than this value
     Returns:
         - JSON with requested resource usage information.
     """
@@ -37,7 +41,13 @@ class ResourceUsageInformationAPI(Resource):
 
         packets = None
         if asset_type == 'device':
-            temp_packets = PacketRepository.get_with(ids_list=json.loads(asset.last_packets_list))
+            temp_packets = PacketRepository.get_with(
+                    ids_list=json.loads(asset.last_packets_list),
+                    min_rssi = request.args.get('min_rssi', default = None, type=int),
+                    max_rssi = request.args.get('max_rssi', default = None, type=int),
+                    min_snr = request.args.get('min_snr', default = None, type=float),
+                    max_snr = request.args.get('max_snr', default = None, type=float)
+                )
             packets = []
             for packet, gw_id in temp_packets:
                 to_add = packet.to_json()
