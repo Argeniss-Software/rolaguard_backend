@@ -29,6 +29,7 @@ class AssetInformationAPI(Resource):
         response = {
             'id' : asset.id,
             'hex_id' : asset.hex_id,
+            'dev_addr' : getattr(asset, 'dev_addr', None),
             'organization_id': asset.organization_id,
             'type' : asset.type,
             'name' : asset.name,
