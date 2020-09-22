@@ -35,6 +35,15 @@ class ResourceUsageInformationAPI(Resource):
 
         uptime = asset.npackets_up * asset.activity_freq if asset.activity_freq else 0
 
+        packets = None
+        if asset_type == 'device':
+            temp_packets = PacketRepository.get_with(ids_list=json.loads(asset.last_packets_list))
+            packets = []
+            for packet, gw_id in temp_packets:
+                to_add = packet.to_json()
+                to_add.update({'gateway_id': gw_id})
+                packets.append(to_add)
+
         response = {
             'id': asset.id,
             'hex_id': asset.hex_id,
@@ -57,7 +66,7 @@ class ResourceUsageInformationAPI(Resource):
                 "name": tag.name,
                 "color": tag.color
             } for tag in TagRepository.list_asset_tags(asset_id, asset_type, organization_id)],
-            'last_packets_list': [packet.to_json() for packet in PacketRepository.get_with(ids_list=json.loads(asset.last_packets_list))] if asset_type == 'device' else None
+            'last_packets_list': packets
         }
 
         return response, 200
