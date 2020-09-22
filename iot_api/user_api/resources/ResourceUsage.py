@@ -40,6 +40,8 @@ class ResourceUsageInformationAPI(Resource):
         uptime = asset.npackets_up * asset.activity_freq if asset.activity_freq else 0
 
         packets = None
+        lsnr_values = None
+        rssi_values = None
         if asset_type == 'device':
             temp_packets = PacketRepository.get_with(
                     ids_list=json.loads(asset.last_packets_list),
@@ -53,6 +55,8 @@ class ResourceUsageInformationAPI(Resource):
                 to_add = packet.to_json()
                 to_add.update({'gateway_id': gw_id})
                 packets.append(to_add)
+            lsnr_values = [packet['lsnr'] for packet in packets if packet['lsnr'] is not None]
+            rssi_values = [packet['rssi'] for packet in packets if packet['rssi'] is not None]
 
         response = {
             'id': asset.id,
@@ -77,10 +81,10 @@ class ResourceUsageInformationAPI(Resource):
                 "color": tag.color
             } for tag in TagRepository.list_asset_tags(asset_id, asset_type, organization_id)],
             'last_packets_list': packets,
-            'min_lsnr_packets': min([packet['lsnr'] for packet in packets]) if packets and len(packets) > 0 else None,
-            'max_lsnr_packets': max([packet['lsnr'] for packet in packets]) if packets and len(packets) > 0 else None,
-            'min_rssi_packets': min([packet['rssi'] for packet in packets]) if packets and len(packets) > 0 else None,
-            'max_rssi_packets': max([packet['rssi'] for packet in packets]) if packets and len(packets) > 0 else None
+            'min_lsnr_packets': min(lsnr_values) if lsnr_values and len(lsnr_values) > 0 else None,
+            'max_lsnr_packets': max(lsnr_values) if lsnr_values and len(lsnr_values) > 0 else None,
+            'min_rssi_packets': min(rssi_values) if rssi_values and len(rssi_values) > 0 else None,
+            'max_rssi_packets': max(rssi_values) if rssi_values and len(rssi_values) > 0 else None,
         }
 
         return response, 200
