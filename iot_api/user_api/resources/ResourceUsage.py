@@ -76,7 +76,11 @@ class ResourceUsageInformationAPI(Resource):
                 "name": tag.name,
                 "color": tag.color
             } for tag in TagRepository.list_asset_tags(asset_id, asset_type, organization_id)],
-            'last_packets_list': packets
+            'last_packets_list': packets,
+            'min_snr_packets': min([packet['lsnr'] for packet in packets]),
+            'max_snr_packets': max([packet['lsnr'] for packet in packets]),
+            'min_rssi_packets': min([packet['rssi'] for packet in packets]),
+            'max_rssi_packets': max([packet['rssi'] for packet in packets])
         }
 
         return response, 200
