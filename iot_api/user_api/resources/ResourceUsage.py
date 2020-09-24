@@ -61,7 +61,6 @@ class ResourceUsageInformationAPI(Resource):
         response = {
             'id': asset.id,
             'hex_id': asset.hex_id,
-            'dev_addr': asset.dev_addr,
             'type': asset.type,
             'name': asset.name,
             'data_collector': asset.data_collector,
