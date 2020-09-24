@@ -61,6 +61,7 @@ class ResourceUsageInformationAPI(Resource):
         response = {
             'id': asset.id,
             'hex_id': asset.hex_id,
+            'dev_addr': asset.dev_addr,
             'type': asset.type,
             'name': asset.name,
             'data_collector': asset.data_collector,
@@ -136,6 +137,7 @@ class ResourceUsageListAPI(Resource):
         assets = [{
             'id': dev.id,
             'hex_id': dev.hex_id,
+            'dev_addr': dev.dev_addr,
             'type': dev.type,
             'name': dev.name,
             'data_collector': dev.data_collector,
