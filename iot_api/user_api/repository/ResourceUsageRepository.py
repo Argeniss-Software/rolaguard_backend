@@ -119,7 +119,8 @@ def list_all(organization_id, page=None, size=None,
             join(DataCollector).\
             join(GatewayToDevice).\
             filter(Device.organization_id==organization_id).\
-            filter(Device.pending_first_connection==False)
+            filter(Device.pending_first_connection==False).\
+            filter(DeviceSession.connected)
     gtw_query = db.session.query(
         distinct(Gateway.id).label('id'),
         Gateway.gw_hex_id.label('hex_id'),

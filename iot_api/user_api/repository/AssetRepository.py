@@ -27,7 +27,7 @@ def get_with(asset_id, asset_type, organization_id=None):
         result = db.session.query(Device, DeviceSession.dev_addr).\
             join(DeviceSession).\
             filter(Device.id == asset_id).\
-            order_by(DeviceSession.last_activity).\
+            filter(DeviceSession.connected).\
             first()
         if not result:
             raise Error.NotFound(f"Asset with id {asset_id} and type {asset_type} not found")
