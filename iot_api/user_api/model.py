@@ -880,6 +880,7 @@ class DeviceSession(db.Model):
     device_auth_data_id = Column(BigInteger, ForeignKey("device_auth_data.id"), nullable=True)
     last_packet_id = Column(BigInteger, ForeignKey("packet.id"), nullable=True)
     last_activity = Column(DateTime(timezone=True), nullable=False)
+    connected = Column(Boolean, nullable=False, default=True)
 
 
 class Packet(db.Model):
