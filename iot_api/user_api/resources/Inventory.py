@@ -360,6 +360,8 @@ class AssetsListAPI(Resource):
             importances = request.args.getlist('importances[]', type=AssetImportance)
         )
 
+        # Dev_addr is not returned here because is already in the used in the inventory section,
+        # but it is returned in the AssetInformation endpoint for the asset 360 view.
         devices = [{
             'id' : dev.id,
             'hex_id' : dev.hex_id,
