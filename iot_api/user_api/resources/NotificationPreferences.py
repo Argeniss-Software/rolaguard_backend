@@ -275,17 +275,20 @@ def send_activation_emails():
             server.login(config.SMTP_USERNAME, config.SMTP_PASSWORD)
             single = singletonURL()
             msg = MIMEMultipart('alternative')
-            msg['Subject'] = "RoLaGuard Email Confirmation"
+            msg['Subject'] = f"{config.BRAND_NAME} Email Confirmation"
             msg['From'] = email.utils.formataddr((config.SMTP_SENDER_NAME, config.SMTP_SENDER))
 
             for item in activation_emails:
                 token = item.get('token')
                 email_user = item.get('email')
-                full_url = single.getParam() + "notifications/email_activation/" + str(token)
+                full_url = config.BRAND_URL + "notifications/email_activation/" + str(token)
                 print('init email sending')
                 msg['To'] = email_user
                 part = MIMEText(render_template(
-                    'notification_activation.html', full_url=full_url),'html')
+                    'notification_activation.html',
+                    brand_name=config.BRAND_NAME,
+                    full_url=full_url
+                    ),'html')
                 msg.attach(part)
                 server.sendmail(config.SMTP_SENDER,email_user, msg.as_string())
                 print("finished email sending")
@@ -298,10 +301,10 @@ def send_activation_sms():
             token = item.get('token')
             phone = item.get('phone')
             single = singletonURL()
-            full_url = single.getParam() + "notifications/phone_activation/" + str(token)
+            full_url = config.BRAND_URL + "notifications/phone_activation/" + str(token)
             sns.publish(
                 PhoneNumber=phone,
-                Message='Please activate this phone to receive RoLaGuard notifications by clicking the link below. ' + full_url,
+                Message=f'Please activate this phone to receive {config.BRAND_NAME} notifications by clicking the link ' + full_url,
             )
 
 def random_string(length):

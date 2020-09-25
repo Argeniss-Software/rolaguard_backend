@@ -409,17 +409,20 @@ class ResendActivationAPI(Resource):
             )
 
             single = singletonURL()
-            full_url = single.getParam() + \
+            full_url = config.BRAND_URL + \
                        "activation/" + str(encoded_token)
 
             if config.SMTP_HOST and config.SEND_EMAILS:
                 LOG.debug('init email sending')
                 msg = MIMEMultipart('alternative')
-                msg['Subject'] = "RoLaGuard Account Confirmation"
+                msg['Subject'] = f"{config.BRAND_NAME} Account Confirmation"
                 msg['From'] = email.utils.formataddr((config.SMTP_SENDER_NAME, config.SMTP_SENDER))
                 msg['To'] = new_user.email
                 part = MIMEText(render_template(
-                    'activation.html', full_url=full_url), 'html')
+                    'activation.html',
+                    brand_name=config.BRAND_NAME,
+                    full_url=full_url
+                    ), 'html')
                 msg.attach(part)
                 server = smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT)
                 # server.set_debuglevel(1)
@@ -511,16 +514,19 @@ class CreatePasswordAPI(Resource):
                 new_account_activation.save_to_db()
 
                 single = singletonURL()
-                full_url = single.getParam() + "activation/" + str(encoded_token)
+                full_url = config.BRAND_URL + "activation/" + str(encoded_token)
 
                 if config.SMTP_HOST and config.SEND_EMAILS:
                     LOG.debug('init email sending')
                     msg = MIMEMultipart('alternative')
-                    msg['Subject'] = "RoLaGuard Account Confirmation"
+                    msg['Subject'] = f"{config.BRAND_NAME} Account Confirmation"
                     msg['From'] = email.utils.formataddr((config.SMTP_SENDER_NAME, config.SMTP_SENDER))
                     msg['To'] = current_user.email
                     part = MIMEText(render_template(
-                        'activation.html', full_url=full_url), 'html')
+                        'activation.html',
+                        brand_name=config.BRAND_NAME,
+                        full_url=full_url
+                        ), 'html')
                     msg.attach(part)
                     server = smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT)
                     server.ehlo()
@@ -573,8 +579,13 @@ class CreatePasswordAPI(Resource):
                     msg['From'] = email.utils.formataddr((config.SMTP_SENDER_NAME, config.SMTP_SENDER))
                     msg['To'] = info_email
                     part = MIMEText(render_template(
-                        'new_organization.html', username=current_user.username, fullname=current_user.full_name,
-                        email=current_user.email, phone=current_user.phone), 'html')
+                        'new_organization.html',
+                        brand_name=config.BRAND_NAME,
+                        username=current_user.username,
+                        fullname=current_user.full_name,
+                        email=current_user.email,
+                        phone=current_user.phone
+                        ), 'html')
                     msg.attach(part)
                     server = smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT)
                     server.ehlo()
@@ -668,18 +679,21 @@ class PasswordRecoveryAPI(Resource):
                     active=True
                 )
                 single = singletonURL()
-                full_url = single.getParam() + \
+                full_url = config.BRAND_URL + \
                            "change_password/" + str(encoded_token)
 
                 if config.SMTP_HOST and config.SEND_EMAILS:
                     LOG.debug('init email sending')
                     msg = MIMEMultipart('alternative')
-                    msg['Subject'] = "RoLaGuard Password Recovery"
+                    msg['Subject'] = f"{config.BRAND_NAME} Password Recovery"
                     msg['From'] = email.utils.formataddr((config.SMTP_SENDER_NAME, config.SMTP_SENDER))
                     msg['To'] = current_user.email
                     # msg['To'] = 'bounce@simulator.amazonses.com'
                     part = MIMEText(render_template(
-                        'recovery.html', full_url=full_url), 'html')
+                        'recovery.html',
+                        brand_name=config.BRAND_NAME,
+                        full_url=full_url
+                        ), 'html')
                     msg.attach(part)
                     server = smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT)
                     # server.set_debuglevel(1)
@@ -751,11 +765,14 @@ class ChangePasswordByRecoveryAPI(Resource):
             if config.SMTP_HOST and config.SEND_EMAILS:
                 LOG.debug('init email sending')
                 msg = MIMEMultipart('alternative')
-                msg['Subject'] = "RoLaGuard Password Changed"
+                msg['Subject'] = f"{config.BRAND_NAME} Password Changed"
                 msg['From'] = email.utils.formataddr((config.SMTP_SENDER_NAME, config.SMTP_SENDER))
                 msg['To'] = current_user.email
                 part = MIMEText(render_template(
-                    'password_changed.html', full_url=single.getParam()), 'html')
+                    'password_changed.html',
+                    brand_name=config.BRAND_NAME,
+                    full_url=config.BRAND_URL
+                    ), 'html')
                 msg.attach(part)
                 server = smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT)
                 # server.set_debuglevel(1)
@@ -856,17 +873,20 @@ class ChangeEmailRequestAPI(Resource):
             new_request.save_to_db()
 
             single = singletonURL()
-            full_url = single.getParam() + \
+            full_url = config.BRAND_URL + \
                        "change_email_request/" + str(encoded_token)
 
             if config.SMTP_HOST and config.SEND_EMAILS:
                 LOG.debug('init email sending')
                 msg = MIMEMultipart('alternative')
-                msg['Subject'] = "RoLaGuard Change Email Request"
+                msg['Subject'] = f"{config.BRAND_NAME} Change Email Request"
                 msg['From'] = email.utils.formataddr((config.SMTP_SENDER_NAME, config.SMTP_SENDER))
                 msg['To'] = current_user.email
                 part = MIMEText(render_template(
-                    'change_email_request.html', full_url=full_url), 'html')
+                    'change_email_request.html',
+                    brand_name=config.BRAND_NAME,
+                    full_url=full_url
+                    ), 'html')
                 msg.attach(part)
                 server = smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT)
                 # server.set_debuglevel(1)
@@ -969,16 +989,19 @@ class Login(Resource):
                     user.update_to_db()
 
                     single = singletonURL()
-                    full_url = single.getParam() + "recovery"
+                    full_url = config.BRAND_URL + "recovery"
 
                     if config.SMTP_HOST and config.SEND_EMAILS:
                         LOG.debug('init email sending')
                         msg = MIMEMultipart('alternative')
-                        msg['Subject'] = "RoLaGuard Account Blocked"
+                        msg['Subject'] = f"{config.BRAND_NAME} Account Blocked"
                         msg['From'] = email.utils.formataddr((config.SMTP_SENDER_NAME, config.SMTP_SENDER))
                         msg['To'] = user.email
                         part = MIMEText(render_template(
-                            'blocked_account.html', full_url=full_url), 'html')
+                            'blocked_account.html',
+                            brand_name=config.BRAND_NAME,
+                            full_url=full_url
+                            ), 'html')
                         msg.attach(part)
                         server = smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT)
                         # server.set_debuglevel(1)
@@ -1165,15 +1188,18 @@ class Register(Resource):
                     if config.SMTP_HOST and config.SEND_EMAILS:
                         
                         single = singletonURL()
-                        full_url = single.getParam() + "recovery/"
+                        full_url = config.BRAND_URL + "recovery/"
 
                         LOG.debug('init email sending')
                         msg = MIMEMultipart('alternative')
-                        msg['Subject'] = "RoLaGuard Existing Account"
+                        msg['Subject'] = f"{config.BRAND_NAME} Existing Account"
                         msg['From'] = email.utils.formataddr((config.SMTP_SENDER_NAME, config.SMTP_SENDER))
                         msg['To'] = email_without_space
                         part = MIMEText(render_template(
-                            'existing_account.html', full_url=full_url), 'html')
+                            'existing_account.html',
+                            brand_name=config.BRAND_NAME,
+                            full_url=full_url
+                            ), 'html')
                         msg.attach(part)
                         server = smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT)
                         # server.set_debuglevel(1)
@@ -1206,16 +1232,19 @@ class Register(Resource):
             )
 
             single = singletonURL()
-            full_url = single.getParam() + "activation/" + str(encoded_token)
+            full_url = config.BRAND_URL + "activation/" + str(encoded_token)
 
             if config.SMTP_HOST and config.SEND_EMAILS:
                 LOG.debug('init email sending')
                 msg = MIMEMultipart('alternative')
-                msg['Subject'] = "RoLaGuard Account Confirmation"
+                msg['Subject'] = f"{config.BRAND_NAME} Account Confirmation"
                 msg['From'] = email.utils.formataddr((config.SMTP_SENDER_NAME, config.SMTP_SENDER))
                 msg['To'] = user.email
                 part = MIMEText(render_template(
-                    'activation.html', full_url=full_url), 'html')
+                    'activation.html',
+                    brand_name=config.BRAND_NAME,
+                    full_url=full_url
+                    ), 'html')
                 msg.attach(part)
                 server = smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT)
                 server.ehlo()
