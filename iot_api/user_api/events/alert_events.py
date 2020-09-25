@@ -20,7 +20,6 @@ from iot_api.user_api.models import (
 )
 from iot_api.user_api.repository import AssetRepository, DeviceRepository, GatewayRepository
 #from iot_api.user_api.enums import WebUrl
-from iot_api.user_api.singletonURL import singletonURL
 
 from iot_api.user_api.websocket.notifications import emit_notification_event
 from iot_api.user_api.websocket.alerts import emit_alert_event
@@ -155,8 +154,6 @@ def handle_alert_events(ch, method, properties, body):
 
     if len(emails) > 0:
         with app.app_context():
-            single = singletonURL()
-            print('init email sending')
             msg = MIMEMultipart('alternative')
             msg['Subject'] = f"New {config.BRAND_NAME} Notification"
             msg['From'] = email.utils.formataddr((config.SMTP_SENDER_NAME, config.SMTP_SENDER))
@@ -177,7 +174,6 @@ def handle_alert_events(ch, method, properties, body):
             server.ehlo()
             server.login(config.SMTP_USERNAME, config.SMTP_PASSWORD)
 
-            print(emails)
             for email_user in emails:
                 try:
                     msg['To'] = email_user
@@ -186,6 +182,5 @@ def handle_alert_events(ch, method, properties, body):
                     server.close()
                     print(exc)
             server.close()  
-            print("finished email sending")
 
 subscribe_alert_consumers()

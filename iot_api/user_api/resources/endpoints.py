@@ -42,7 +42,6 @@ from iot_api.user_api.models.NotificationDataCollectorSettings import Notificati
 from iot_api.user_api.models.NotificationPreferences import NotificationPreferences
 from iot_api.user_api.models.Policy import Policy
 from iot_api.user_api.model import Quarantine
-from iot_api.user_api.singletonURL import singletonURL
 
 from urllib.parse import urlencode
 from urllib.request import urlopen
@@ -408,7 +407,6 @@ class ResendActivationAPI(Resource):
                 user_roles_id=user_roles_id
             )
 
-            single = singletonURL()
             full_url = config.BRAND_URL + \
                        "activation/" + str(encoded_token)
 
@@ -513,7 +511,6 @@ class CreatePasswordAPI(Resource):
                 )
                 new_account_activation.save_to_db()
 
-                single = singletonURL()
                 full_url = config.BRAND_URL + "activation/" + str(encoded_token)
 
                 if config.SMTP_HOST and config.SEND_EMAILS:
@@ -678,7 +675,6 @@ class PasswordRecoveryAPI(Resource):
                     creation_date=datetime.datetime.now().isoformat(),
                     active=True
                 )
-                single = singletonURL()
                 full_url = config.BRAND_URL + \
                            "change_password/" + str(encoded_token)
 
@@ -761,7 +757,6 @@ class ChangePasswordByRecoveryAPI(Resource):
             password_reset.active = False
             password_reset.update_to_db()
 
-            single = singletonURL()
             if config.SMTP_HOST and config.SEND_EMAILS:
                 LOG.debug('init email sending')
                 msg = MIMEMultipart('alternative')
@@ -872,7 +867,6 @@ class ChangeEmailRequestAPI(Resource):
 
             new_request.save_to_db()
 
-            single = singletonURL()
             full_url = config.BRAND_URL + \
                        "change_email_request/" + str(encoded_token)
 
@@ -988,7 +982,6 @@ class Login(Resource):
                     user.blocked = True
                     user.update_to_db()
 
-                    single = singletonURL()
                     full_url = config.BRAND_URL + "recovery"
 
                     if config.SMTP_HOST and config.SEND_EMAILS:
@@ -1187,7 +1180,6 @@ class Register(Resource):
                 if user.active:
                     if config.SMTP_HOST and config.SEND_EMAILS:
                         
-                        single = singletonURL()
                         full_url = config.BRAND_URL + "recovery/"
 
                         LOG.debug('init email sending')
@@ -1231,7 +1223,6 @@ class Register(Resource):
                 user_roles_id=",".join([str(x) for x in user_roles])
             )
 
-            single = singletonURL()
             full_url = config.BRAND_URL + "activation/" + str(encoded_token)
 
             if config.SMTP_HOST and config.SEND_EMAILS:

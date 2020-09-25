@@ -27,7 +27,6 @@ from iot_api.user_api import Error
 
 from iot_api.user_api.schemas.notification_preferences_schema import NotificationPreferencesSchema
 
-from iot_api.user_api.singletonURL import singletonURL
 from iot_api import config 
 import smtplib  
 import email.utils
@@ -273,7 +272,6 @@ def send_activation_emails():
             #stmplib docs recommend calling ehlo() before & after starttls()
             server.ehlo()
             server.login(config.SMTP_USERNAME, config.SMTP_PASSWORD)
-            single = singletonURL()
             msg = MIMEMultipart('alternative')
             msg['Subject'] = f"{config.BRAND_NAME} Email Confirmation"
             msg['From'] = email.utils.formataddr((config.SMTP_SENDER_NAME, config.SMTP_SENDER))
@@ -300,7 +298,6 @@ def send_activation_sms():
         for item in activation_sms:
             token = item.get('token')
             phone = item.get('phone')
-            single = singletonURL()
             full_url = config.BRAND_URL + "notifications/phone_activation/" + str(token)
             sns.publish(
                 PhoneNumber=phone,
