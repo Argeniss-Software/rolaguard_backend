@@ -10,11 +10,11 @@ try:
     BRAND_NAME = os.environ['BRAND_NAME']
 except:
     BRAND_NAME = "RoLaGuard CE"
-
 try:
     BRAND_URL = os.environ['BRAND_URL']
 except:
     BRAND_URL = "localhost:30000"
+log.info(f'Using "{BRAND_NAME}" as brand and {BRAND_URL} as URL')
 
 # Features
 try:
