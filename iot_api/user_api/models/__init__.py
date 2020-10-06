@@ -25,3 +25,4 @@ from iot_api.user_api.models.PasswordReset import PasswordReset
 from iot_api.user_api.models.RevokedTokenModel import RevokedTokenModel
 from iot_api.user_api.models.SendMailAttempts import SendMailAttempts
 from iot_api.user_api.models.StatsCounters import StatsCounters
+from iot_api.user_api.models.CounterType import CounterType
