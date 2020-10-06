@@ -27,3 +27,4 @@ from iot_api.user_api.models.SendMailAttempts import SendMailAttempts
 from iot_api.user_api.models.StatsCounters import StatsCounters
 from iot_api.user_api.models.CounterType import CounterType
 from iot_api.user_api.models.DeviceCounters import DeviceCounters
+from iot_api.user_api.models.GatewayCounters import GatewayCounters
