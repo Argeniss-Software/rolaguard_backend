@@ -28,3 +28,4 @@ from iot_api.user_api.models.StatsCounters import StatsCounters
 from iot_api.user_api.models.CounterType import CounterType
 from iot_api.user_api.models.DeviceCounters import DeviceCounters
 from iot_api.user_api.models.GatewayCounters import GatewayCounters
+from iot_api.user_api.models.RowProcessed import RowProcessed
