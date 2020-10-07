@@ -1,16 +1,20 @@
 import iot_logging
 log = iot_logging.getLogger(__name__)
 
-from sqlalchemy import distinct, cast, Float, func, null
+from sqlalchemy import distinct, cast, Float, func, null, case, BigInteger
 from sqlalchemy.sql import select, expression, text, not_, and_
 
 from iot_api.user_api import db
 from iot_api.user_api.repository import DeviceRepository, GatewayRepository
-from iot_api.user_api.model import Device, Gateway, GatewayToDevice, DeviceSession
-from iot_api.user_api.models import DataCollector, Policy, PolicyItem
+from iot_api.user_api.model import Device, Gateway, GatewayToDevice, DeviceSession, Packet
+from iot_api.user_api.models import DataCollector, Policy, PolicyItem, CounterType, DeviceCounters, GatewayCounters, RowProcessed
 from iot_api.user_api import Error
 
 from collections import defaultdict
+
+dev_wanted_counters = [CounterType.PACKETS_UP, CounterType.PACKETS_DOWN, CounterType.PACKETS_LOST, 
+        CounterType.RETRANSMISSIONS, CounterType.JOIN_REQUESTS, CounterType.FAILED_JOIN_REQUESTS]
+gtw_wanted_counters = [CounterType.PACKETS_UP, CounterType.PACKETS_DOWN]
 
 def get_with(asset_id, asset_type, organization_id=None):
     """ Gets an asset from database
@@ -23,7 +27,7 @@ def get_with(asset_id, asset_type, organization_id=None):
         - Model object of requested asset
     """
     if asset_type=="device":
-        asset = db.session.query(
+        asset_query = db.session.query(
             Device.id,
             Device.organization_id,
             Device.dev_eui.label('hex_id'),
@@ -44,14 +48,24 @@ def get_with(asset_id, asset_type, organization_id=None):
             Device.ngateways_connected_to,
             Device.payload_size,
             Device.last_packets_list
-            ).join(DataCollector).\
-                join(GatewayToDevice).\
-                filter(Device.id == asset_id).\
+            ).filter(Device.id == asset_id).\
+                join(DataCollector, Device.data_collector_id == DataCollector.id).\
                 join(Policy, Policy.id == DataCollector.policy_id).\
                 join(PolicyItem, and_(Policy.id == PolicyItem.policy_id, PolicyItem.alert_type_code == 'LAF-401')).\
-                first()
+                join(RowProcessed, RowProcessed.analyzer == 'packet_analyzer').\
+                join(Packet, Packet.id == RowProcessed.last_row).\
+                join(DeviceCounters, and_(
+                    DeviceCounters.device_id == Device.id, 
+                    DeviceCounters.counter_type.in_(dev_wanted_counters),
+                    DeviceCounters.last_update + func.make_interval(0,0,0,1) > Packet.date
+                    ), isouter=True).\
+                group_by(Device.id, DataCollector.name, PolicyItem.parameters)
+
+        asset_query = add_counters_columns(asset_query, dev_wanted_counters, DeviceCounters)
+        asset = asset_query.first()
+
     elif asset_type=="gateway":
-        asset = db.session.query(
+        asset_query = db.session.query(
             Gateway.id,
             Gateway.organization_id,
             Gateway.gw_hex_id.label('hex_id'),
@@ -72,9 +86,19 @@ def get_with(asset_id, asset_type, organization_id=None):
             cast(expression.null(), Float).label('ngateways_connected_to'),
             cast(expression.null(), Float).label('payload_size'),
             expression.null().label('last_packets_list')
-            ).join(DataCollector).\
-                filter(Gateway.id == asset_id).\
-                first()
+            ).filter(Gateway.id == asset_id).\
+                join(DataCollector, Gateway.data_collector_id == DataCollector.id).\
+                join(RowProcessed, RowProcessed.analyzer == 'packet_analyzer').\
+                join(Packet, Packet.id == RowProcessed.last_row).\
+                join(GatewayCounters, and_(
+                    GatewayCounters.gateway_id == Gateway.id, 
+                    GatewayCounters.counter_type.in_(gtw_wanted_counters),
+                    GatewayCounters.last_update + func.make_interval(0,0,0,1) > Packet.date
+                    ), isouter=True).\
+                group_by(Gateway.id, DataCollector.name)
+
+        asset_query = add_counters_columns(asset_query, gtw_wanted_counters, GatewayCounters)
+        asset = asset_query.first()
     else:
         raise Error.BadRequest(f"Invalid asset_type: {asset_type}. Valid values are \'device\' or \'gateway\'")
     if not asset:
@@ -499,6 +523,28 @@ def add_filters(dev_query, gtw_query, asset_type=None, asset_status=None,
         ))
 
     return (dev_query, gtw_query)
+
+def add_counters_columns(query, wanted_counters, asset_counters_cls):
+    for counter_type in CounterType:
+        if counter_type in wanted_counters:
+            query = query.add_column(
+                cast(
+                    func.coalesce(func.sum(case([(asset_counters_cls.counter_type == counter_type, asset_counters_cls.value)], else_=0)), 0),
+                    BigInteger
+                ).label(counter_type.value)
+            )
+        else:
+            query = query.add_column(cast(expression.null(), BigInteger).label(counter_type.value))
+    return query
+
+def build_count_subquery(counter_type):
+    return db.session.query(DeviceCounters.device_id, func.coalesce(func.sum(DeviceCounters.value), 0).label('count')).\
+        join(RowProcessed, RowProcessed.analyzer == 'packet_analyzer').\
+        join(Packet, Packet.id == RowProcessed.last_row).\
+        filter(DeviceCounters.counter_type == counter_type).\
+        filter(DeviceCounters.last_update + func.make_interval(0,0,0,1) > Packet.date).\
+        group_by(DeviceCounters.device_id).\
+        subquery()
 
 def query_for_count(dev_query, gtw_query, asset_type):
     """
