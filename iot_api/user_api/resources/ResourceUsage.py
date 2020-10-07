@@ -64,7 +64,7 @@ class ResourceUsageInformationAPI(Resource):
             'activity_freq_variance': asset.activity_freq_variance,
             'packets_up': buildPacketsInfo(asset.PACKETS_UP, asset.PACKETS_UP+asset.PACKETS_DOWN+(asset.PACKETS_LOST or 0)),
             'packets_down': buildPacketsInfo(asset.PACKETS_DOWN, asset.PACKETS_UP+asset.PACKETS_DOWN+(asset.PACKETS_LOST or 0)),
-            'packets_lost': buildPacketsInfo(asset.PACKETS_LOST, asset.PACKETS_UP+asset.PACKETS_DOWN+(asset.PACKETS_LOST or 0)) if asset.type == 'assetice' else None,
+            'packets_lost': buildPacketsInfo(asset.PACKETS_LOST, asset.PACKETS_UP+asset.PACKETS_DOWN+(asset.PACKETS_LOST or 0)) if asset.type == 'Device' else None,
             'retransmissions': asset.RETRANSMISSIONS,
             'join_requests': asset.JOIN_REQUESTS,
             'failed_join_requests': asset.FAILED_JOIN_REQUESTS,

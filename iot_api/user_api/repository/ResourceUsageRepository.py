@@ -318,7 +318,8 @@ def count_per_gateway(organization_id, asset_type=None, asset_status=None,
     # Query to count the number of devices per gateway
     dev_query = db.session.query(Gateway.id, Gateway.gw_hex_id, func.count(distinct(Device.id)).label("count_result")).\
         select_from(Gateway).\
-        join(Device).\
+        join(GatewayToDevice, GatewayToDevice.gateway_id == Gateway.id).\
+        join(Device, Device.id == GatewayToDevice.device_id).\
         group_by(Gateway.id, Gateway.gw_hex_id).\
         filter(Gateway.organization_id==organization_id).\
         filter(Device.pending_first_connection==False)
