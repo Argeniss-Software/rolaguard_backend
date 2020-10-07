@@ -253,14 +253,12 @@ def count_per_status(organization_id, asset_type=None, asset_status=None,
     """
     dev_query = db.session.query(Device.connected, func.count(distinct(Device.id)).label("count_result")).\
         select_from(Device).\
-        join(GatewayToDevice).\
         group_by(Device.connected).\
         filter(Device.organization_id==organization_id).\
         filter(Device.pending_first_connection==False)
 
     gtw_query = db.session.query(Gateway.connected, func.count(distinct(Gateway.id)).label("count_result")).\
         select_from(Gateway).\
-        join(GatewayToDevice).\
         group_by(Gateway.connected).\
         filter(Gateway.organization_id==organization_id)
 
@@ -320,7 +318,6 @@ def count_per_gateway(organization_id, asset_type=None, asset_status=None,
     # Query to count the number of devices per gateway
     dev_query = db.session.query(Gateway.id, Gateway.gw_hex_id, func.count(distinct(Device.id)).label("count_result")).\
         select_from(Gateway).\
-        join(GatewayToDevice).\
         join(Device).\
         group_by(Gateway.id, Gateway.gw_hex_id).\
         filter(Gateway.organization_id==organization_id).\
@@ -328,7 +325,6 @@ def count_per_gateway(organization_id, asset_type=None, asset_status=None,
 
     # The number of gateway grouped by gateway is simply 1
     gtw_query = db.session.query(Gateway.id, Gateway.gw_hex_id, expression.literal_column("1").label("count_result")).\
-        join(GatewayToDevice).\
         filter(Gateway.organization_id==organization_id)
 
     queries = add_filters(
@@ -392,7 +388,6 @@ def count_per_signal_strength(organization_id, asset_type=None, asset_status=Non
 
     dev_query = dev_query.\
         select_from(Device).\
-        join(GatewayToDevice).\
         filter(Device.organization_id==organization_id).\
         filter(Device.pending_first_connection==False)
 
@@ -521,31 +516,48 @@ def add_filters(dev_query, gtw_query, asset_type=None, asset_status=None,
         gtw_query = gtw_query.filter(not_(Gateway.connected))
     elif asset_status is not None:
         raise Error.BadRequest("Invalid asset status parameter")
+
     if gateway_ids:
-        dev_query = dev_query.filter(GatewayToDevice.gateway_id.in_(gateway_ids))
+        wanted_devs = db.session.\
+            query(distinct(GatewayToDevice.device_id).label('device_id')).\
+            filter(GatewayToDevice.gateway_id.in_(gateway_ids)).\
+            subquery()
+
+        dev_query = dev_query.join(wanted_devs, Device.id == wanted_devs.c.device_id)
         gtw_query = gtw_query.filter(Gateway.id.in_(gateway_ids))
+
     if device_ids:
+        wanted_gtws = db.session.\
+            query(distinct(GatewayToDevice.gateway_id).label('gateway_id')).\
+            filter(GatewayToDevice.device_id.in_(device_ids)).\
+            subquery()
+
         dev_query = dev_query.filter(Device.id.in_(device_ids))
-        gtw_query = gtw_query.filter(GatewayToDevice.device_id.in_(device_ids))
+        gtw_query = gtw_query.join(wanted_gtws, Gateway.id == wanted_gtws.c.gateway_id)
+
     if min_signal_strength is not None:
         dev_query = dev_query.filter(and_(Device.max_rssi != null(), Device.max_rssi >= min_signal_strength))
     if max_signal_strength is not None:
         dev_query = dev_query.filter(and_(Device.max_rssi != null(), Device.max_rssi < max_signal_strength))
+
+    packets_up = build_count_subquery(CounterType.PACKETS_UP)
+    packets_down = build_count_subquery(CounterType.PACKETS_DOWN)
+    packets_lost = build_count_subquery(CounterType.PACKETS_LOST)
+
+    if min_packet_loss is not None or max_packet_loss is not None:
+        dev_query = dev_query.\
+            join(packets_up, Device.id == packets_up.c.device_id).\
+            join(packets_down, Device.id == packets_down.c.device_id).\
+            join(packets_lost, Device.id == packets_lost.c.device_id)
     if min_packet_loss is not None:
         dev_query = dev_query.filter(and_(
-            Device.npackets_up + Device.npackets_down > 0,
-            Device.npackets_lost != null(),
-            100*Device.npackets_up*Device.npackets_lost \
-                /(Device.npackets_up*(1+Device.npackets_lost) + Device.npackets_down) \
-                    >= min_packet_loss
+            packets_up.c.count + packets_down.c.count + packets_lost.c.count > 0,
+            100*packets_lost.c.count/(packets_up.c.count + packets_down.c.count + packets_lost.c.count) >= min_packet_loss
         ))
     if max_packet_loss is not None:
         dev_query = dev_query.filter(and_(
-            Device.npackets_up + Device.npackets_down > 0,
-            Device.npackets_lost != null(),
-            100*Device.npackets_up*Device.npackets_lost \
-                /(Device.npackets_up*(1+Device.npackets_lost) + Device.npackets_down) \
-                    < max_packet_loss
+            packets_up.c.count + packets_down.c.count + packets_lost.c.count > 0,
+            100*packets_lost.c.count/(packets_up.c.count + packets_down.c.count + packets_lost.c.count) < max_packet_loss
         ))
 
     return (dev_query, gtw_query)
