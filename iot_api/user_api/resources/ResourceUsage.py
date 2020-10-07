@@ -121,15 +121,6 @@ class ResourceUsageListAPI(Resource):
             max_packet_loss = request.args.get('max_packet_loss', default = None, type=int)
         )
 
-        PacketsInfo = namedtuple('PacketsInfo', ['up', 'down', 'lost'])
-        packet_counts = [PacketsInfo(
-            dev.npackets_up,
-            dev.npackets_down,
-            int(round(dev.packet_loss * dev.npackets_up)) if dev.packet_loss is not None else 0,
-        ) for dev in results.items]
-
-        uptimes = [dev.npackets_up * dev.activity_freq if dev.activity_freq else 0 for dev in results.items]
-
         assets = [{
             'id': dev.id,
             'hex_id': dev.hex_id,
@@ -142,14 +133,17 @@ class ResourceUsageListAPI(Resource):
             'last_activity': calendar.timegm(dev.last_activity.timetuple()),
             'activity_freq': dev.activity_freq if asset_is_regular(dev) else None,
             'activity_freq_variance': dev.activity_freq_variance,
-            'packets_up': buildPacketsInfo(uptime, packets.up, sum(list(packets))),
-            'packets_down': buildPacketsInfo(uptime, packets.down, sum(list(packets))),
-            'packets_lost': buildPacketsInfo(uptime, packets.lost, sum(list(packets))) if dev.packet_loss is not None else None,
+            'packets_up': buildPacketsInfo(dev.PACKETS_UP, dev.PACKETS_UP+dev.PACKETS_DOWN+(dev.PACKETS_LOST or 0)),
+            'packets_down': buildPacketsInfo(dev.PACKETS_DOWN, dev.PACKETS_UP+dev.PACKETS_DOWN+(dev.PACKETS_LOST or 0)),
+            'packets_lost': buildPacketsInfo(dev.PACKETS_LOST, dev.PACKETS_UP+dev.PACKETS_DOWN+(dev.PACKETS_LOST or 0)) if dev.type == 'Device' else None,
+            'retransmissions': dev.RETRANSMISSIONS,
+            'join_requests': dev.JOIN_REQUESTS,
+            'failed_join_requests': dev.FAILED_JOIN_REQUESTS,
             'max_rssi': dev.max_rssi,
             'max_lsnr': dev.max_lsnr,
             'payload_size':dev.payload_size,
             'ngateways_connected_to':dev.ngateways_connected_to
-        } for dev, packets, uptime in zip(results.items, packet_counts, uptimes)]
+        } for dev in results.items]
         response = {
             'assets': assets,
             'total_pages': results.pages,
