@@ -125,6 +125,11 @@ def list_all(organization_id, page=None, size=None,
     Returns:
         - Dict with the list of assets.
     """
+    last_dev_addrs = db.session.\
+        query(DeviceSession.device_id, func.max(DeviceSession.last_activity).label('last_activity')).\
+        group_by(DeviceSession.device_id).\
+        subquery()
+
     # Build two queries, one for devices and one for gateways
     dev_query = db.session.query(
         Device.id.label('id'),
@@ -149,13 +154,19 @@ def list_all(organization_id, page=None, size=None,
         ).select_from(Device).\
             filter(Device.organization_id==organization_id).\
             filter(Device.pending_first_connection==False).\
-            join(DeviceSession, Device.id == DeviceSession.device_id).\
             join(DataCollector, Device.data_collector_id == DataCollector.id).\
-            join(GatewayToDevice, Device.id == GatewayToDevice.device_id).\
             join(Policy, Policy.id == DataCollector.policy_id).\
             join(PolicyItem, and_(Policy.id == PolicyItem.policy_id, PolicyItem.alert_type_code == 'LAF-401')).\
-            order_by(Device.id, DeviceSession.last_activity.desc()).\
-            distinct(Device.id)
+            join(last_dev_addrs, Device.id == last_dev_addrs.c.device_id).\
+            join(DeviceSession, and_(DeviceSession.device_id == Device.id, DeviceSession.last_activity == last_dev_addrs.c.last_activity)).\
+            join(RowProcessed, RowProcessed.analyzer == 'packet_analyzer').\
+            join(Packet, Packet.id == RowProcessed.last_row).\
+            join(DeviceCounters, and_(
+                DeviceCounters.device_id == Device.id, 
+                DeviceCounters.counter_type.in_(dev_wanted_counters),
+                DeviceCounters.last_update + func.make_interval(0,0,0,1) > Packet.date
+                ), isouter=True).\
+            group_by(Device.id, DeviceSession.dev_addr, DataCollector.name, PolicyItem.parameters)
 
     gtw_query = db.session.query(
         distinct(Gateway.id).label('id'),
@@ -178,9 +189,20 @@ def list_all(organization_id, page=None, size=None,
         cast(expression.null(), Float).label('payload_size'),
         cast(expression.null(), Float).label('ngateways_connected_to')
         ).select_from(Gateway).\
-            join(DataCollector).\
-            join(GatewayToDevice).\
-            filter(Gateway.organization_id == organization_id)
+            filter(Gateway.organization_id == organization_id).\
+            join(DataCollector, Gateway.data_collector_id == DataCollector.id).\
+            join(RowProcessed, RowProcessed.analyzer == 'packet_analyzer').\
+            join(Packet, Packet.id == RowProcessed.last_row).\
+            join(GatewayCounters, and_(
+                GatewayCounters.gateway_id == Gateway.id, 
+                GatewayCounters.counter_type.in_(gtw_wanted_counters),
+                GatewayCounters.last_update + func.make_interval(0,0,0,1) > Packet.date
+                ), isouter=True).\
+            group_by(Gateway.id, DataCollector.name)
+
+    # Add a column for every counter type to each query, using the wanted_counters lists
+    dev_query = add_counters_columns(dev_query, dev_wanted_counters, DeviceCounters)
+    gtw_query = add_counters_columns(gtw_query, gtw_wanted_counters, GatewayCounters)
 
     queries = add_filters(
         dev_query = dev_query,
