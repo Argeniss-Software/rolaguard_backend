@@ -447,6 +447,11 @@ def count_per_packet_loss(organization_id, asset_type=None, asset_status=None,
     # The packet loss ranges are defined as [L,R) = [range_limits[i], range_limits[i+1]) for every 0 <= i <= 9
     range_limits = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 101]
     range_names = ['[0,10)', '[10,20)', '[20,30)', '[30,40)', '[40,50)', '[50,60)', '[60,70)', '[70,80)', '[80,90)', '[90,100]']
+
+    packets_up = build_count_subquery(CounterType.PACKETS_UP)
+    packets_down = build_count_subquery(CounterType.PACKETS_DOWN)
+    packets_lost = build_count_subquery(CounterType.PACKETS_LOST)
+
     dev_query = db.session.query()
     gtw_query = db.session.query()
     for i in range(0, len(range_names)):
@@ -454,12 +459,9 @@ def count_per_packet_loss(organization_id, asset_type=None, asset_status=None,
         L = range_limits[i]
         R = range_limits[i+1]
         dev_query = dev_query.add_column(func.count(distinct(Device.id)).filter(and_(
-            Device.npackets_lost != null(),
-            Device.npackets_up + Device.npackets_down > 0,
-            L <= 100*Device.npackets_up*Device.npackets_lost \
-                /(Device.npackets_up*(1+Device.npackets_lost) + Device.npackets_down),
-            R > 100*Device.npackets_up*Device.npackets_lost \
-                /(Device.npackets_up*(1+Device.npackets_lost) + Device.npackets_down)
+            packets_up.c.count + packets_down.c.count + packets_lost.c.count > 0,
+            L <= 100*packets_lost.c.count/(packets_up.c.count + packets_down.c.count + packets_lost.c.count),
+            R > 100*packets_lost.c.count/(packets_up.c.count + packets_down.c.count + packets_lost.c.count),
             )).label(name))
         
         # Gateways are not considered because they don't have the loss value
@@ -467,9 +469,11 @@ def count_per_packet_loss(organization_id, asset_type=None, asset_status=None,
 
     dev_query = dev_query.\
         select_from(Device).\
-        join(GatewayToDevice).\
         filter(Device.organization_id==organization_id).\
-        filter(Device.pending_first_connection==False)
+        filter(Device.pending_first_connection==False).\
+        join(packets_up, Device.id == packets_up.c.device_id).\
+        join(packets_down, Device.id == packets_down.c.device_id).\
+        join(packets_lost, Device.id == packets_lost.c.device_id)
 
     queries = add_filters(
         dev_query = dev_query,
