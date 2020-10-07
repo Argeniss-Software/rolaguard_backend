@@ -30,15 +30,6 @@ class ResourceUsageInformationAPI(Resource):
         organization_id = get_jwt_claims().get('organization_id')
         asset = ResourceUsageRepository.get_with(asset_id, asset_type,  organization_id)
 
-        PacketsInfo = namedtuple('PacketsInfo', ['up', 'down', 'lost'])
-        packet_counts = PacketsInfo(
-            asset.npackets_up,
-            asset.npackets_down,
-            int(round(asset.packet_loss * asset.npackets_up)) if asset.packet_loss is not None else 0,
-        )
-
-        uptime = asset.npackets_up * asset.activity_freq if asset.activity_freq else 0
-
         packets = None
         lsnr_values = None
         rssi_values = None
@@ -71,9 +62,12 @@ class ResourceUsageInformationAPI(Resource):
             'last_activity': calendar.timegm(asset.last_activity.timetuple()),
             'activity_freq': asset.activity_freq if asset_is_regular(asset) else None,
             'activity_freq_variance': asset.activity_freq_variance,
-            'packets_up': buildPacketsInfo(uptime, packet_counts.up, sum(list(packet_counts))),
-            'packets_down': buildPacketsInfo(uptime, packet_counts.down, sum(list(packet_counts))),
-            'packets_lost': buildPacketsInfo(uptime, packet_counts.lost, sum(list(packet_counts))) if asset.packet_loss is not None else None,
+            'packets_up': buildPacketsInfo(asset.PACKETS_UP, asset.PACKETS_UP+asset.PACKETS_DOWN+(asset.PACKETS_LOST or 0)),
+            'packets_down': buildPacketsInfo(asset.PACKETS_DOWN, asset.PACKETS_UP+asset.PACKETS_DOWN+(asset.PACKETS_LOST or 0)),
+            'packets_lost': buildPacketsInfo(asset.PACKETS_LOST, asset.PACKETS_UP+asset.PACKETS_DOWN+(asset.PACKETS_LOST or 0)) if asset.type == 'assetice' else None,
+            'retransmissions': asset.RETRANSMISSIONS,
+            'join_requests': asset.JOIN_REQUESTS,
+            'failed_join_requests': asset.FAILED_JOIN_REQUESTS,
             'max_rssi': asset.max_rssi,
             'max_lsnr': asset.max_lsnr,
             'ngateways_connected_to': asset.ngateways_connected_to,
@@ -163,21 +157,16 @@ class ResourceUsageListAPI(Resource):
         }
         return response, 200
 
-def buildPacketsInfo(uptime, count, total):
+def buildPacketsInfo(count, total):
     """ Helper function to calculate data related with packets received from an asset
     Request parameters (all required):
-        - uptime: time since asset is connected in seconds
         - count: number of packets of the type (up, down, lost) to calculate data for
         - total: number of packets in total
     Returns:
         - JSON with packets related information (see code for more details about the fields).
     """
-    secs_bw_packets = uptime/count if count else None
     return {
         'total': count,
-        'per_minute': 60/secs_bw_packets if secs_bw_packets else 0,
-        'per_hour': 60*60/secs_bw_packets if secs_bw_packets else 0,
-        'per_day': 24*60*60/secs_bw_packets if secs_bw_packets else 0,
         'percentage': 100*count/total if total else None
     }
 
