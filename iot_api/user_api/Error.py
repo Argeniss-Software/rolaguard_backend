@@ -67,9 +67,7 @@ class Internal(Exception):
 @app.errorhandler(InvalidUsage)
 def handle_invalid_usage(error):
     log.error(str(error))
-    response = jsonify(error.to_dict())
-    response.status_code = error.status_code
-    return response
+    return error.to_dict(), error.status_code
 
 @app.errorhandler(BadRequest)
 def handle_400(error):
