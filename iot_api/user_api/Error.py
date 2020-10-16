@@ -66,7 +66,7 @@ class Internal(Exception):
 
 @app.errorhandler(InvalidUsage)
 def handle_invalid_usage(error):
-    log.error(str(error))
+    log.warning(str(error))
     return error.to_dict(), error.status_code
 
 @app.errorhandler(BadRequest)
