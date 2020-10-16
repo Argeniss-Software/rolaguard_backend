@@ -1212,7 +1212,7 @@ class Register(Resource):
                         "message": "An email was sent to the account provided"
                     }
                 elif config.SEND_EMAILS:
-                    raise Error.InvalidUsage("Something went wrong trying to send mail: " + \
+                    raise Error.Internal("Something went wrong trying to send mail: " + \
                         "Existing account mail not sent because there is no SMTP server configured.")
             
         # If user didn't exist or existed but wasn't activated, then send  an activation mail 
