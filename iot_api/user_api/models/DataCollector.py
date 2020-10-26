@@ -140,6 +140,19 @@ class DataCollector(db.Model):
         except Exception as e:
             LOG.error(e)
 
+            @classmethod
+
+    def find_by_ids_in_org(cls, collector_ids, organization_id):
+        try:
+            collectors = []
+            for collector_id in collector_ids:
+                collector = DataCollector.find_by_id(collector_id)
+                if collector.organization_id == organization_id
+                    collectors.append(collector)
+            return collectors
+        except Exception as e:
+            LOG.error(e)
+
     @classmethod
     def count(cls, organization_id, policy_id=None):
         try:

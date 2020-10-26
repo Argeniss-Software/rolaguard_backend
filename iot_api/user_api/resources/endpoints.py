@@ -321,7 +321,7 @@ class UserInfoAPI(Resource):
                 collector_ids = list(map(lambda x: int(x), collector_id_strings))
             else:
                 collector_ids = []
-            collectors = DataCollector.find_by_ids(collector_ids)
+            collectors = DataCollector.find_by_ids_in_org(collector_ids, user.organization_id)
 
             # update data in current user after checking that it has an active token or it's an active user,
             # and that it's not trying to autodowngrade role
@@ -1162,7 +1162,7 @@ class Register(Resource):
             if "data_collectors" in data and data["data_collectors"] is not None and len(data["data_collectors"]) > 0:
                 collector_id_strings = data["data_collectors"]
                 collector_ids = list(map(lambda x: int(x), collector_id_strings))
-            collectors = DataCollector.find_by_ids(collector_ids)
+            collectors = DataCollector.find_by_ids_in_org(collector_ids, user.organization_id)
 
             user = User(
                 username=username_without_space.lower(),
