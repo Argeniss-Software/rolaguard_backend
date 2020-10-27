@@ -321,7 +321,7 @@ class UserInfoAPI(Resource):
                 collector_ids = list(map(lambda x: int(x), collector_id_strings))
                 collectors = DataCollector.find_with( collector_ids, user.organization_id)
             else:
-                collector = []
+                collectors = []
             
 
             # update data in current user after checking that it has an active token or it's an active user,

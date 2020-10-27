@@ -127,13 +127,13 @@ class DataCollector(db.Model):
     def find_with(cls, collector_ids, organization_id):
         try:
             query = cls.query.filter(cls.deleted_at == None)
-
-            if organization_id:
-                query = query.filter(cls.organization_id == organization_id)
             
             if collector_ids is not None:
                 query = query.filter(cls.id.in_(collector_ids))
             
+            if organization_id:
+                query = query.filter(cls.organization_id == organization_id)
+
             return query.all()
         
         except Exception as e:
