@@ -124,11 +124,30 @@ class DataCollector(db.Model):
         return db.session.query(cls).get(id)
 
     @classmethod
+    def find_with(cls, collector_ids, organization_id):
+        try:
+            query = cls.query.filter(cls.deleted_at == None)
+
+            if organization_id:
+                query = query.filter(cls.organization_id == organization_id)
+            
+            if collector_ids is not None:
+                query = query.filter(cls.id.in_(collector_ids))
+            
+            return query.all()
+        
+        except Exception as e:
+            LOG.error(e)
+
+
+
+    @classmethod
     def find_by_id(cls, id):
         try:
             return cls.query.filter(cls.deleted_at == None).filter(cls.id == id).first()
         except Exception as e:
             LOG.error(e)
+
 
     @classmethod
     def find_by_ids(cls, collector_ids):
@@ -136,19 +155,6 @@ class DataCollector(db.Model):
             collectors = []
             for collector_id in collector_ids:
                 collectors.append(DataCollector.find_by_id(collector_id))
-            return collectors
-        except Exception as e:
-            LOG.error(e)
-
-            @classmethod
-
-    def find_by_ids_in_org(cls, collector_ids, organization_id):
-        try:
-            collectors = []
-            for collector_id in collector_ids:
-                collector = DataCollector.find_by_id(collector_id)
-                if collector.organization_id == organization_id
-                    collectors.append(collector)
             return collectors
         except Exception as e:
             LOG.error(e)
