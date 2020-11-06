@@ -35,8 +35,8 @@ class AssetListAPI(Resource):
             page = request.args.get('page', default=1, type=int),
             size = request.args.get('size', default=5, type=int),
             page_ids = request.args.get('page_ids', default=1, type=int),
-            size_ids = request.args.get('size_ids', default=5, type=int),
-            search_param = request.args.get('search_param', default=None, type=str),
+            size_ids = request.args.get('size_ids', default=20, type=int),
+            search_param = request.args.get('search_param', default=None),
             asset_type = request.args.get('asset_type', default=None, type=str),
             asset_status = request.args.get('asset_status', default=None, type=str),
             data_collector_ids=request.args.getlist('data_collector_ids[]'),
@@ -44,22 +44,23 @@ class AssetListAPI(Resource):
             tag_ids = request.args.getlist('tag_ids[]'),
             importances = request.args.get('importances')
         )
-        
+            
         # @todo: fix the next lines for return from model
-        devices_ids = [device['id'] for device in assets['devices'].items if 'id' in device]
-        gateway_ids = [gateway['id'] for gateway in assets['gateways'].items if 'id' in gateway]
+        devices_ids = [device.id for device in assets['device_ids'].items]
+        gateway_ids = [gateway.id for gateway in assets['gateway_ids'].items]
 
         response = {
-            'assets': {
-                'devices': [dev.__dict__ for dev in assets['devices'].items],
-                'devices_ids': devices_ids,
-                'gateways': assets['gateways'].items,
-                'gateways_ids': gateway_ids
+            'devices': {
+                'items': [d._asdict() for d in assets['devices'].items],
+                'items_ids': devices_ids,                
+                'total_pages': assets['devices'].pages,
+                'total_items': assets['devices'].total,
             },
-            'device_total_pages': assets['devices'].pages,
-            'device_total_items': assets['devices'].total,
-
-            'device_total_pages': assets['gateways'].pages,
-            'device_total_items': assets['gateways'].total,
+            'gateways': {
+                'items': [g._asdict() for g in assets['gateways'].items],
+                'items_ids': gateway_ids,
+                'total_pages': assets['gateways'].pages,
+                'total_items': assets['gateways'].total,
+            }
         }
         return response, 200

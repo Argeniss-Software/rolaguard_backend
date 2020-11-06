@@ -13,9 +13,31 @@ from iot_api.user_api import Error
 from collections import defaultdict
 
 
-def get(organization_id, page=None, size=None, page_ids=None, size_ids=None, search_param='',asset_type=None, asset_status=None, 
+def get(organization_id, page=None, size=None, page_ids=None, size_ids=None, search_param="",asset_type=None, asset_status=None, 
         data_collector_ids=None, gateway_ids=None, tag_ids=None, importances=None):
-    
+    """ Get assets and devices filtered by string search param that found in multiple fields of the asset. Also you can pass other params for filtering
+
+    Args:
+        organization_id ([type]): [description]
+        page ([type], optional): [description]. Defaults to None.
+        size ([type], optional): [description]. Defaults to None.
+        page_ids ([type], optional): [description]. Defaults to None.
+        size_ids ([type], optional): [description]. Defaults to None.
+        search_param (str, optional): [description]. Defaults to "".
+        asset_type ([type], optional): [description]. Defaults to None.
+        asset_status ([type], optional): [description]. Defaults to None.
+        data_collector_ids ([type], optional): [description]. Defaults to None.
+        gateway_ids ([type], optional): [description]. Defaults to None.
+        tag_ids ([type], optional): [description]. Defaults to None.
+        importances ([type], optional): [description]. Defaults to None.
+
+    Raises:
+        Error.BadRequest: [description]
+        Error.BadRequest: [description]
+
+    Returns:
+        [type]: [description]
+    """
     # Build two queries, one for devices and one for gateways
     dev_query = db.session.query(
         distinct(Device.id).label('id'),
@@ -28,16 +50,22 @@ def get(organization_id, page=None, size=None, page_ids=None, size_ids=None, sea
         Device.app_name,
         DataCollector.name.label('data_collector'),
         Device.vendor,
-        Device.importance,
+        #Device.importance,
         Device.connected,
-        Device.first_activity,
-        Device.last_activity
+        #Device.first_activity,
+        #Device.last_activity
         ).select_from(Device).\
             join(DataCollector).\
             join(GatewayToDevice).\
             filter(Device.organization_id==organization_id).\
             filter(Device.pending_first_connection==False)
     
+    dev_query_ids = db.session.query(distinct(Device.id).label('id')).select_from(Device).\
+            join(DataCollector).\
+            join(GatewayToDevice).\
+            filter(Device.organization_id==organization_id).\
+            filter(Device.pending_first_connection==False)
+
     gtw_query = db.session.query(
         distinct(Gateway.id).label('id'),
         Gateway.gw_hex_id.label('hex_id'),
@@ -49,18 +77,14 @@ def get(organization_id, page=None, size=None, page_ids=None, size_ids=None, sea
         expression.null().label('app_name'),
         DataCollector.name.label('data_collector'),
         Gateway.vendor,
-        Gateway.importance,
+        #Gateway.importance,
         Gateway.connected,
-        Gateway.first_activity,
-        Gateway.last_activity
+        #Gateway.first_activity,
+        #Gateway.last_activity
         ).select_from(Gateway).\
             join(DataCollector).\
             filter(Gateway.organization_id == organization_id)
-
-    # If filter parameters were given, add the respective where clauses to the queries
-    if search_param:
-        dev_query = dev_query.filter(Device.vendor.like("%{}%".format(search_param)))
-        gtw_query = gtw_query.filter(Gateway.vendor.like("%{}%".format(search_param)))
+  
     if gateway_ids:
         dev_query = dev_query.filter(GatewayToDevice.gateway_id.in_(gateway_ids))
         gtw_query = gtw_query.filter(Gateway.id.in_(gateway_ids))
@@ -70,9 +94,9 @@ def get(organization_id, page=None, size=None, page_ids=None, size_ids=None, sea
     if tag_ids:
         dev_query = dev_query.filter(Device.id.in_(DeviceRepository.query_ids_with(tag_ids=tag_ids)))
         gtw_query = gtw_query.filter(Gateway.id.in_(GatewayRepository.query_ids_with(tag_ids=tag_ids)))
-    if importances:
-        dev_query = dev_query.filter(Device.importance.in_(importances))
-        gtw_query = gtw_query.filter(Gateway.importance.in_(importances))
+    #if importances:
+    #    dev_query = dev_query.filter(Device.importance.in_(importances))
+    #    gtw_query = gtw_query.filter(Gateway.importance.in_(importances))
 
     # Filter by device type if the parameter was given, else, make a union with queries.
     # if asset_type is None:
@@ -94,16 +118,48 @@ def get(organization_id, page=None, size=None, page_ids=None, size_ids=None, sea
         raise Error.BadRequest("Invalid asset status parameter")
 
     #asset_query = asset_query.order_by(text('type desc, id'))
+  
+    gtw_query_ids = db.session.query(distinct(Gateway.id).label('id')).select_from(Gateway).\
+            join(DataCollector).\
+            filter(Gateway.organization_id == organization_id)
+
+    # If filter parameters were given, add the respective where clauses to the queries
+    if search_param:
+        search_param_device_condition = or_(\
+            Device.vendor.ilike(f'%{search_param}%'),\
+            Device.dev_eui.ilike(f'%{search_param}%'),\
+            Device.name.ilike(f'%{search_param}%'),\
+            Device.join_eui.ilike(f'%{search_param}%'),\
+            Device.app_name.ilike(f'%{search_param}%'),\
+            DataCollector.name.ilike(f'%{search_param}%')
+            )
+
+        dev_query = dev_query.filter(search_param_device_condition)
+        dev_query_ids = dev_query_ids.filter(search_param_device_condition)
+
+        search_param_gateway_condition = or_(
+            Gateway.vendor.ilike(f'%{search_param}%'),\
+            Gateway.gw_hex_id.ilike(f'%{search_param}%'),\
+            Gateway.name.ilike(f'%{search_param}%'),\
+            DataCollector.name.ilike(f'%{search_param}%')
+            )
+        gtw_query = gtw_query.filter(search_param_gateway_condition)
+        gtw_query_ids = gtw_query_ids.filter(search_param_gateway_condition)
+
 
     if page and size:
         return {
             "devices": dev_query.paginate(page=page, per_page=size, error_out=False),
+            "device_ids": dev_query_ids.paginate(page=page_ids, per_page=size_ids, error_out=False),
             "gateways": gtw_query.paginate(page=page, per_page=size, error_out=False),
+            "gateway_ids": gtw_query_ids.paginate(page=page_ids, per_page=size_ids, error_out=False),
         }
     else:
         return {
             "devices": [],
-            "gateways": []
+            "device_ids": [],
+            "gateways": [],
+            "gateways_ids": []
         }
 
 
