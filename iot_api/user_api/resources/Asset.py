@@ -33,7 +33,7 @@ class AssetListAPI(Resource):
         assets = AssetRepository.get(
             organization_id = get_jwt_claims().get('organization_id'),
             page = request.args.get('page', default=1, type=int),
-            size = request.args.get('size', default=5, type=int),
+            size = request.args.get('size', default=3, type=int),
             page_ids = request.args.get('page_ids', default=1, type=int),
             size_ids = request.args.get('size_ids', default=20, type=int),
             search_param = request.args.get('search_param', default=None),
