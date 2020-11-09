@@ -30,7 +30,7 @@ class AssetListAPI(Resource):
     """
     @admin_regular_allowed
     def get(self):
-        assets = AssetRepository.get(
+        assets = AssetRepository.search(
             organization_id = get_jwt_claims().get('organization_id'),
             page = request.args.get('page', default=1, type=int),
             size = request.args.get('size', default=3, type=int),

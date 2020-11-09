@@ -166,7 +166,7 @@ api.add_resource(res.ResourceUsagePerSignalStrengthCountAPI, '/api/v1.0/resource
 api.add_resource(res.ResourceUsagePerPacketLossCountAPI, '/api/v1.0/resource_usage/count/loss')
 
 #region Asset
-api.add_resource(res.AssetListAPI, '/api/v1.0/assets')
+api.add_resource(res.AssetListAPI, '/api/v1.0/assets/search')
 #endregion
 
 if __name__ == '__main__':

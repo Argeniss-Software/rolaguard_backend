@@ -13,7 +13,7 @@ from iot_api.user_api import Error
 from collections import defaultdict
 
 
-def get(organization_id, page=None, size=None, page_ids=None, size_ids=None, search_param="",asset_type=None, asset_status=None, 
+def search(organization_id, page=None, size=None, page_ids=None, size_ids=None, search_param="",asset_type=None, asset_status=None, 
         data_collector_ids=None, gateway_ids=None, tag_ids=None, importances=None):
     """ Get assets and devices filtered by string search param that found in multiple fields of the asset.
         Also you can pass other params for filtering - keep this params for future filters features.
