@@ -15,28 +15,31 @@ from collections import defaultdict
 
 def get(organization_id, page=None, size=None, page_ids=None, size_ids=None, search_param="",asset_type=None, asset_status=None, 
         data_collector_ids=None, gateway_ids=None, tag_ids=None, importances=None):
-    """ Get assets and devices filtered by string search param that found in multiple fields of the asset. Also you can pass other params for filtering
+    """ Get assets and devices filtered by string search param that found in multiple fields of the asset.
+        Also you can pass other params for filtering - keep this params for future filters features.
+
 
     Args:
-        organization_id ([type]): [description]
-        page ([type], optional): [description]. Defaults to None.
-        size ([type], optional): [description]. Defaults to None.
-        page_ids ([type], optional): [description]. Defaults to None.
-        size_ids ([type], optional): [description]. Defaults to None.
-        search_param (str, optional): [description]. Defaults to "".
-        asset_type ([type], optional): [description]. Defaults to None.
-        asset_status ([type], optional): [description]. Defaults to None.
-        data_collector_ids ([type], optional): [description]. Defaults to None.
-        gateway_ids ([type], optional): [description]. Defaults to None.
-        tag_ids ([type], optional): [description]. Defaults to None.
-        importances ([type], optional): [description]. Defaults to None.
-
-    Raises:
-        Error.BadRequest: [description]
-        Error.BadRequest: [description]
+        organization_id (integer): Filter by assets belongs to this organization id
+        page (integer, optional): [description]. Defaults to 1.
+        size (integer, optional): [description]. Defaults to 3.
+        page_ids (integer, optional): [description]. Defaults to 1.
+        size_ids (integer, optional): [description]. Defaults to 20.
+        search_param (string, optional): A string used for find coincidence in vendor, hexid, datasource join eui and app name. Defaults to "".
+        asset_type (string, optional): Filter assets for only show devices or gateways. Defaults to None.
+        asset_status (string, optional): Filter assets by 'connected' or 'disconnected'. Defaults to None.
+        data_collector_ids (integer, optional): Filter assets belongs to data collector ids. Defaults to None.
+        gateway_ids (integer, optional): Filter devices connected to gateways ids or filter by specific gateway ids . Defaults to None.
+        tag_ids (integer, optional): Filter assets that has this tags ids. Defaults to None.
+        importances (string, optional): A string for filter by importance. Defaults to None.
 
     Returns:
-        [type]: [description]
+        [dict]: return a dict with keys: 
+            "devices": a list of devices that coincide with the search criteria,
+            "device_ids": a list of ids of devices that coincide with the search critera,
+            "gateways": a list of gateways that coincide with the search criteria,
+            "device_ids": a list of ids of gateways that coincide with the search critera,
+        }
     """
     # Build two queries, one for devices and one for gateways
     dev_query = db.session.query(
