@@ -1904,8 +1904,6 @@ class DataCollectorTTNAccount(Resource):
             return internal("couldn't get TTN access data")
 
         access_token = data_access.json().get('access_token')
-
-        LOG.debug(f"auth_header: Bearer {access_token}")
         res = ses.get('https://console.thethingsnetwork.org/api/gateways', headers={'Authorization': 'Bearer {}'.format(access_token)}, timeout=30)
 
         session['user_gateways'] = [{"id":gateway.get('id'), "description":gateway.get('attributes').get('description')} for gateway in res.json()]
