@@ -195,7 +195,11 @@ def handle_status_events(ch, method, properties, body):
         data_collector.status = new_status
         if new_verified != data_collector.verified:
             data_collector.verified = new_verified
-        data_collector.update_to_db()
+        try:
+            data_collector.update_to_db()
+        except Exception as exc:
+            data_collector.rollback()
+            raise exc
     except Exception:
         LOG.error('Couldn\'t update data collector status')
 
