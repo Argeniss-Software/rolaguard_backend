@@ -314,7 +314,11 @@ class UserInfoAPI(Resource):
                                 user_id=current_user.id,
                                 user_role_id=role_to_add
                             )
-                            new_user_to_user_role.save_to_db()
+                            try:
+                                new_user_to_user_role.save_to_db()
+                            except Exception as exc:
+                                new_user_to_user_role.rollback()
+                                raise exc                                
                         elif account_activation:  # adding role to not active user created after delay
                             account_activation.user_roles_id = role_to_add
                             account_activation.update_to_db()
@@ -439,7 +443,11 @@ class ResendActivationAPI(Resource):
                 server.sendmail(config.SMTP_SENDER, new_user.email, msg.as_string())
                 server.close()
                 LOG.debug("finished email sending")
-                new_account_activation.save_to_db()
+                try:
+                    new_account_activation.save_to_db()
+                except Exception as exc:
+                    new_account_activation.rollback()
+                    raise exc
                 return jsonify({"message": "Activation E-mail Resent Successfully"})
             elif config.SEND_EMAILS:
                 LOG.error("Mail not sent since there is not SMTP server configured.")
@@ -516,7 +524,11 @@ class CreatePasswordAPI(Resource):
                     active=True,
                     user_roles_id=account_activation.user_roles_id    
                 )
-                new_account_activation.save_to_db()
+                try:
+                    new_account_activation.save_to_db()
+                except Exception as exc:
+                    new_account_activation.rollback()
+                    raise exc
 
                 full_url = config.BRAND_URL + "activation/" + str(encoded_token)
 
@@ -571,7 +583,11 @@ class CreatePasswordAPI(Resource):
                 new_organization = Organization(
                     name=username_without_space
                 )
-                new_organization.save_to_db()
+                try:
+                    new_organization.save_to_db()
+                except Exception as exc:
+                    new_organization.rollback()
+                    raise exc
                 organization_id = new_organization.id
                 current_user.organization_id = organization_id
                 current_user.update_to_db()
@@ -617,7 +633,11 @@ class CreatePasswordAPI(Resource):
                             user_id=current_user.id,
                             user_role_id=role_id
                         )
-                        new_user_to_user_role.save_to_db()
+                        try:
+                            new_user_to_user_role.save_to_db()
+                        except Exception as exc:
+                            new_user_to_user_role.rollback()
+                            raise exc
                     else:
                         print(f"Error creating User to User Role relation: User Role with id ({role}) does not exist!")
 
@@ -708,7 +728,11 @@ class PasswordRecoveryAPI(Resource):
                     server.sendmail(config.SMTP_SENDER, current_user.email, msg.as_string())
                     # server.sendmail(config.SMTP_SENDER,'bounce@simulator.amazonses.com', msg.as_string())
                     server.close()
-                    new_password_reset.save_to_db()
+                    try:
+                        new_password_reset.save_to_db()
+                    except Exception as exc:
+                        new_password_reset.rollback()
+                        raise exc
                     LOG.debug("finished email sending")
                 elif config.SEND_EMAILS:
                     LOG.error("Mail not sent since there is not SMTP server configured.")
@@ -872,7 +896,11 @@ class ChangeEmailRequestAPI(Resource):
                 item.active = False
                 item.update_to_db()
 
-            new_request.save_to_db()
+            try:
+                new_request.save_to_db()
+            except Exception as exc:
+                new_request.rollback()
+                raise exc
 
             full_url = config.BRAND_URL + \
                        "change_email_request/" + str(encoded_token)
@@ -969,7 +997,11 @@ class Login(Resource):
                     attempts=0,
                     last_attempt=datetime.datetime.now().isoformat()
                 )
-                login_attempts.save_to_db()
+                try:
+                    login_attempts.save_to_db()
+                except Exception:
+                    login_attempts.rollback()
+                    LOG.error(f"Couldn\'t save the number of login attempts. Making a rollback")
 
             access_token = create_access_token(identity=user)
             refresh_token = create_refresh_token(identity=user)
@@ -1022,7 +1054,11 @@ class Login(Resource):
                     attempts=1,
                     last_attempt=datetime.datetime.now().isoformat()
                 )
-                login_attempts.save_to_db()
+                try:
+                    login_attempts.save_to_db()
+                except Exception:
+                    login_attempts.rollback()
+                    LOG.error(f"Couldn\'t save the number of login attempts. Making a rollback")
             
             return make_response(jsonify({"error": "forbidden access"}), 403)
 
@@ -1180,7 +1216,12 @@ class Register(Resource):
                 deleted=False,
                 collectors=collectors
             )
-            user.save_to_db()
+            try:
+                user.save_to_db()
+            except Exception:
+                user.rollback()
+                LOG.error(f"Couldn\'t create the new User. Making a rollback")
+            
 
         elif len(list_user) > 0:
             
@@ -1255,7 +1296,11 @@ class Register(Resource):
             server.sendmail(config.SMTP_SENDER, user.email, msg.as_string())
             server.close()
             LOG.debug("finished email sending")
-            new_account_activation.save_to_db()
+            try:
+                new_account_activation.save_to_db()
+            except Exception:
+                new_account_activation.rollback()
+                LOG.error(f"Couldn\'t save the new account activation. Making a rollback")
 
             return {
                 "message": "An email was sent to the account provided"
@@ -1402,7 +1447,11 @@ class DataCollectorAPI(Resource):
                         name=topic,
                         data_collector_id=data_collector.id
                     )
-                    new_mqtt_topic.save_to_db()
+                    try:
+                        new_mqtt_topic.save_to_db()
+                    except Exception as exc:
+                        new_mqtt_topic.rollback()
+                        raise exc
 
             emit_data_collector_event('UPDATED', data_collector.to_json())
             if changed_policy:
@@ -1625,7 +1674,11 @@ class DataCollectorListAPI(Resource):
                 gateway_id=gateway_id,
                 status=DataCollectorStatus.DISCONNECTED
             )
-            new_data_collector.save_to_db()
+            try:
+                new_data_collector.save_to_db()
+            except Exception as exc:
+                new_data_collector.rollback()
+                raise exc
 
             if data['topics']:
                 for topic in data['topics']:
@@ -1633,7 +1686,11 @@ class DataCollectorListAPI(Resource):
                         name=topic,
                         data_collector_id=new_data_collector.id
                     )
-                    new_mqtt_topic.save_to_db()
+                    try:
+                        new_mqtt_topic.save_to_db()
+                    except Exception as exc:
+                        new_mqtt_topic.rollback()
+                        raise exc
             emit_data_collector_event('CREATED', new_data_collector.to_json())
 
             # Create log event
@@ -1829,7 +1886,11 @@ class DataCollectorTestAPI(Resource):
                         name=topic,
                         data_collector_id=new_data_collector.id
                     )
-                    new_mqtt_topic.save_to_db()
+                    try:
+                        new_mqtt_topic.save_to_db()
+                    except Exception as exc:
+                        new_mqtt_topic.rollback()
+                        raise exc
 
             emit_data_collector_event('TEST', new_data_collector.to_json())
 
@@ -2462,7 +2523,11 @@ class SESNotifications(Resource):
                                     user_id=user.id,
                                     attempts=0,
                                 )
-                                send_mail_attempts.save_to_db()
+                                try:
+                                    send_mail_attempts.save_to_db()
+                                except Exception:
+                                    send_mail_attempts.rollback()
+                                    LOG.error(f"Couldn\'t save the number of send mail attempts. Making a rollback")
                 elif message['notificationType'] == 'Bounce':  # mail was bounced
                     LOG.debug('bounce')
                     # handle bounce notifications: do things (count += 1)
@@ -2482,7 +2547,11 @@ class SESNotifications(Resource):
                                     user_id=user.id,
                                     attempts=1,
                                 )
-                                send_mail_attempts.save_to_db()
+                                try:
+                                    send_mail_attempts.save_to_db()
+                                except Exception:
+                                    send_mail_attempts.rollback()
+                                    LOG.error(f"Couldn\'t save the number of send mail attempts. Making a rollback")
         return 200
 
 
