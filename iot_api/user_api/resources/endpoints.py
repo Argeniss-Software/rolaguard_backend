@@ -302,7 +302,11 @@ class UserInfoAPI(Resource):
                 if user_role_id not in user_roles_int:
                     if current_user.active or isinstance(current_user_role, UserToUserRole):
                         # deleting obsolete role from active user or not active created before delay
-                        current_user_role.delete_from_db()
+                        try:
+                            current_user_role.delete_from_db()
+                        except Exception as exc:
+                            current_user_role.rollback()
+                            raise exc                 
 
             # add new added roles to user
             for role_to_add in user_roles_int:
@@ -1525,7 +1529,11 @@ class DataCollectorAPI(Resource):
 
             topics = MqttTopic.find_by_data_collector_id(data_collector_id)
             for topic in topics:
-                topic.delete_from_db()
+                try:
+                    topic.delete_from_db()
+                except Exception as exc:
+                    topic.rollback()
+                    raise exc   
 
             if data['topics']:
                 for topic in data['topics']:
@@ -1601,8 +1609,16 @@ class DataCollectorAPI(Resource):
 
         topics = MqttTopic.find_by_data_collector_id(data_collector_id)
         for topic in topics:
-            topic.delete_from_db()
-        data_collector.delete_from_db()
+            try:
+                topic.delete_from_db()
+            except Exception:
+                topic.rollback()
+                LOG.error(f"Couldn\'t delete the topic with id {topic}. Making a rollback")
+        try:
+            data_collector.delete_from_db()
+        except Exception:
+            data_collector.rollback()
+            LOG.error("Couldn\'t delete the data collector. Making a rollback")
         emit_data_collector_event('DELETED', data_collector.to_json())
 
         # Create log event
