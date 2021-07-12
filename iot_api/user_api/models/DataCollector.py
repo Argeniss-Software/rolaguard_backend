@@ -23,6 +23,7 @@ class DataCollector(db.Model):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     data_collector_type_id = Column(BigInteger, ForeignKey("data_collector_type.id"), nullable=False)
     type = relationship("DataCollectorType", lazy="joined")
+    region = relationship("TTNRegion", lazy="joined")
     policy = relationship("Policy", lazy="joined")
     name = Column(String(120), nullable=False)
     description = Column(String(1000), nullable=False)
@@ -36,6 +37,9 @@ class DataCollector(db.Model):
     client_cert = Column(Text, nullable=True)
     client_key = Column(Text, nullable=True)
     gateway_id = Column(String(50), nullable=True)
+    gateway_name = Column(String(36), nullable=True)
+    gateway_api_key = Column(String(120), nullable=True)
+    region_id = Column(BigInteger, ForeignKey("ttn_region.id"), nullable=True)
     organization_id = Column(BigInteger, ForeignKey("organization.id"), nullable=False)
     policy_id = Column(BigInteger, ForeignKey("policy.id"), nullable=False)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -68,6 +72,9 @@ class DataCollector(db.Model):
             'organization_id': self.organization_id,
             'policy_id': self.policy_id,
             'gateway_id': self.gateway_id,
+            'gateway_name': self.gateway_name,
+            'gateway_api_key': self.gateway_api_key,
+            'region_id': self.region_id,
             'policy_name': self.policy.name if self.policy else None,
             'data_collector_type_id': self.data_collector_type_id,
             'type': self.type.to_json(),
@@ -96,6 +103,8 @@ class DataCollector(db.Model):
             'client_cert': self.client_cert,
             'client_key': self.client_key,
             'gateway_id': self.gateway_id,
+            'gateway_name': self.gateway_name,
+            'gateway_api_key': self.gateway_api_key,
             'organization_id': self.organization_id,
             'data_collector_type_id': self.data_collector_type_id,
             'type': self.type.to_json(),
@@ -112,6 +121,8 @@ class DataCollector(db.Model):
             'created_at': "{}".format(self.created_at),
             'data_collector_type_id': self.data_collector_type_id,
             'gateway_id': self.gateway_id,
+            'gateway_name': self.gateway_name,
+            'gateway_api_key': self.gateway_api_key,
             'type': self.type.to_json(),
             'status': self.status.name,
             'verified': self.verified
