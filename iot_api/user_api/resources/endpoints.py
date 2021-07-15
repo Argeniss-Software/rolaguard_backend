@@ -1605,6 +1605,9 @@ class DataCollectorAPI(Resource):
         if type.type == TTN_COLLECTOR:
             if data.port or data.ip:
                 return bad_request('Not allowed ip and port in ttn_collector type')
+        elif type.type == TTN_V3_COLLECTOR:
+            if data.port or data.ip or data.user or data.password:
+                return bad_request('Not allowed ip, port, user or password in ttn_v3_collector type')
         else:
             try:
                 if not (0 < int(data.port, 10) <= 65536):
@@ -1644,6 +1647,12 @@ class DataCollectorAPI(Resource):
         if data.password:
             uncryptedPassword = bytes(data.password, 'utf-8')
             cryptedPassword = cipher_suite.encrypt(uncryptedPassword).decode('utf8')
+        
+        cryptedApiKey = None
+
+        if data.gateway_api_key:
+            uncryptedApiKey = bytes(data.gateway_api_key, 'utf-8')
+            cryptedApiKey = cipher_suite.encrypt(uncryptedApiKey).decode('utf8')
 
         try:
             data_collector.name = data.name,
@@ -1659,6 +1668,9 @@ class DataCollectorAPI(Resource):
             data_collector.data_collector_type_id = type_id
             data_collector.policy_id = policy_id
             data_collector.gateway_id = gateway_id
+            data_collector.gateway_name = data.gateway_name,
+            data_collector.gateway_api_key = cryptedApiKey,
+            data_collector.region_id = data.region_id,
             try:
                 data_collector.update_to_db()
             except Exception as exc:
@@ -1928,6 +1940,12 @@ class DataCollectorListAPI(Resource):
             uncryptedPassword = bytes(data.password, 'utf-8')
             cryptedPassword = cipher_suite.encrypt(uncryptedPassword).decode('utf8')
 
+        cryptedApiKey = None
+
+        if data.gateway_api_key:
+            uncryptedApiKey = bytes(data.gateway_api_key, 'utf-8')
+            cryptedApiKey = cipher_suite.encrypt(uncryptedApiKey).decode('utf8')
+
         try:
             new_data_collector = DataCollector(
                 name=data.name,
@@ -1947,7 +1965,7 @@ class DataCollectorListAPI(Resource):
                 data_collector_type_id=type_id,
                 gateway_id=gateway_id,
                 gateway_name=data.gateway_name,
-                gateway_api_key=data.gateway_api_key,
+                gateway_api_key=cryptedApiKey,
                 region_id=data.region_id,
                 status=DataCollectorStatus.DISCONNECTED
             )
@@ -2109,7 +2127,6 @@ class DataCollectorTestAPI(Resource):
         organization_id = user.organization_id
         gateway_id = data.gateway_id
         gateway_name = data.gateway_name
-        gateway_api_key = data.gateway_api_key
         region_id = data.region_id
         # data verification
         type_id = data.data_collector_type_id
@@ -2159,6 +2176,12 @@ class DataCollectorTestAPI(Resource):
             uncryptedPassword = bytes(data.password, 'utf-8')
             cryptedPassword = cipher_suite.encrypt(uncryptedPassword).decode('utf8')
 
+        cryptedApiKey = None
+
+        if data.gateway_api_key:
+            uncryptedApiKey = bytes(data.gateway_api_key, 'utf-8')
+            cryptedApiKey = cipher_suite.encrypt(uncryptedApiKey).decode('utf8')
+
         # create new data collector
         try:
             collector_id = str(uuid.uuid4())
@@ -2181,7 +2204,7 @@ class DataCollectorTestAPI(Resource):
                 data_collector_type_id=type_id,
                 gateway_id=gateway_id,
                 gateway_name=gateway_name,
-                gateway_api_key=gateway_api_key,
+                gateway_api_key=cryptedApiKey,
                 region_id=region_id,
                 status=DataCollectorStatus.DISCONNECTED,
                 id=collector_id

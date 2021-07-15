@@ -31,7 +31,7 @@ class DataCollector(db.Model):
     ip = Column(String(120), nullable=True)
     port = Column(String(120), nullable=True)
     user = Column(String(120), nullable=False)
-    password = Column(String(120), nullable=False)
+    password = Column(String(400), nullable=False)
     ssl = Column(Boolean, nullable=True)
     ca_cert  =Column(Text, nullable=True)
     client_cert = Column(Text, nullable=True)
@@ -56,6 +56,12 @@ class DataCollector(db.Model):
         except Exception:
             password = ''
 
+        gateway_api_key = None
+        try:
+            gateway_api_key = cipher_suite.decrypt(bytes(self.gateway_api_key, 'utf8')).decode('utf-8')
+        except Exception:
+            gateway_api_key = ''
+
         return {
             'id': self.id,
             'name': self.name,
@@ -73,7 +79,7 @@ class DataCollector(db.Model):
             'policy_id': self.policy_id,
             'gateway_id': self.gateway_id,
             'gateway_name': self.gateway_name,
-            'gateway_api_key': self.gateway_api_key,
+            'gateway_api_key': gateway_api_key,
             'region_id': self.region_id,
             'policy_name': self.policy.name if self.policy else None,
             'data_collector_type_id': self.data_collector_type_id,
@@ -91,6 +97,12 @@ class DataCollector(db.Model):
         except Exception:
             password = ''
 
+        gateway_api_key = None
+        try:
+            gateway_api_key = cipher_suite.decrypt(bytes(self.gateway_api_key, 'utf8')).decode('utf-8')
+        except Exception:
+            gateway_api_key = ''
+
         return {
             'id': self.id,
             'name': self.name,
@@ -104,7 +116,8 @@ class DataCollector(db.Model):
             'client_key': self.client_key,
             'gateway_id': self.gateway_id,
             'gateway_name': self.gateway_name,
-            'gateway_api_key': self.gateway_api_key,
+            'gateway_api_key': gateway_api_key,
+            'region_id': self.region_id,
             'organization_id': self.organization_id,
             'data_collector_type_id': self.data_collector_type_id,
             'type': self.type.to_json(),
@@ -114,6 +127,12 @@ class DataCollector(db.Model):
         }
 
     def to_json_for_list(self):
+        gateway_api_key = None
+        try:
+            gateway_api_key = cipher_suite.decrypt(bytes(self.gateway_api_key, 'utf8')).decode('utf-8')
+        except Exception:
+            gateway_api_key = ''
+
         return {
             'id': self.id,
             'name': self.name,
@@ -122,7 +141,8 @@ class DataCollector(db.Model):
             'data_collector_type_id': self.data_collector_type_id,
             'gateway_id': self.gateway_id,
             'gateway_name': self.gateway_name,
-            'gateway_api_key': self.gateway_api_key,
+            'gateway_api_key': gateway_api_key,
+            'region_id': self.region_id,
             'type': self.type.to_json(),
             'status': self.status.name,
             'verified': self.verified
