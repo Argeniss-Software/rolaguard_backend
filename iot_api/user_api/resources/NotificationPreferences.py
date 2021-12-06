@@ -179,7 +179,7 @@ class NotificationPreferencesAPI(Resource):
 
                     for webhook in destination.get('additional'):
                         if webhook and not webhook.get('id'):
-                            Webhook(webhook_user_id=user.id,target_url=webhook.get('url'),active=True).save()
+                            Webhook(webhook_user_id=user.id,target_url=webhook.get('url'),url_secret=webhook.get('secret'),active=True).save()
 
             # Update emails -> Delete removed, add new as pending, change to pending to updated
             # Update phones ->Delete removed, add new as pending, change to pending to updated

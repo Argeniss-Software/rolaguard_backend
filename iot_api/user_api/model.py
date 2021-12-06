@@ -1346,6 +1346,7 @@ class Webhook(db.Model):
     id = Column(BigInteger, primary_key=True,autoincrement=True)
     webhook_user_id = Column(BigInteger, ForeignKey("iot_user.id"),nullable=False)
     target_url = Column(String(2000), nullable=False)
+    url_secret = Column(String(256),nullable=True)
     active = Column(Boolean,nullable=False)
 
     def delete(self):
@@ -1362,5 +1363,6 @@ class Webhook(db.Model):
         return {
             'id': self.id,
             'url':self.target_url,
+            'secret':self.url_secret,
             'active':self.active
         }
