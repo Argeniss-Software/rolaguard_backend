@@ -1615,11 +1615,16 @@ class DataCollectorAPI(Resource):
         except Exception as exc:
             return bad_request('Port invalid')
 
-        try:
-            socket.inet_aton(data.ip)
-        except socket.error:
-            if not validators.domain(data.ip):
-                return bad_request('IP invalid')
+        if not validators.url(data.ip):
+            try:
+                socket.inet_aton(data.ip)
+            except socket.error:
+                if not validators.domain(data.ip):
+                    return bad_request('IP invalid')
+        else:
+            try:
+                validators.url(data.ip)
+            except: return bad_request('URL invalid')
 
         if len(data.description) > 1000:
             return bad_request('Description field too long. Max is 1000 characters.')
@@ -1916,11 +1921,16 @@ class DataCollectorListAPI(Resource):
         except Exception as exc:
             return bad_request('Port invalid')
 
-        try:
-            socket.inet_aton(data.ip)
-        except socket.error:
-            if not validators.domain(data.ip):
-                return bad_request('IP invalid')
+        if not validators.url(data.ip):
+            try:
+                socket.inet_aton(data.ip)
+            except socket.error:
+                if not validators.domain(data.ip):
+                    return bad_request('IP invalid')
+        else:
+            try:
+                validators.url(data.ip)
+            except: return bad_request('URL invalid')
 
         if len(data.description) > 1000:
             return bad_request('Description field too long. Max is 1000 characters.')
@@ -2152,11 +2162,16 @@ class DataCollectorTestAPI(Resource):
         except Exception as exc:
             return bad_request('Port invalid')
 
-        try:
-            socket.inet_aton(data.ip)
-        except socket.error:
-            if not validators.domain(data.ip):
-                return bad_request('IP invalid')
+        if not validators.url(data.ip):
+            try:
+                socket.inet_aton(data.ip)
+            except socket.error:
+                if not validators.domain(data.ip):
+                    return bad_request('IP invalid')
+        else:
+            try:
+                validators.url(data.ip)
+            except: return bad_request('URL invalid')
 
         if len(data.description) > 1000:
             return bad_request('Description field too long. Max is 1000 characters.')
