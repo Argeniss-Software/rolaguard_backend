@@ -5,6 +5,7 @@ import json
 import os
 import re
 import smtplib
+from backend.iot_api.user_api.models import DataCollectorGateway
 import socket
 import uuid
 import validators
@@ -1969,6 +1970,12 @@ class DataCollectorListAPI(Resource):
             uncryptedApiKey = bytes(data.gateway_api_key, 'utf-8')
             cryptedApiKey = cipher_suite.encrypt(uncryptedApiKey).decode('utf8')
         try:
+            gateways_list = []
+            if type.type == TTN_V3_COLLECTOR:
+                gateway_ids_list = [gtw.strip() for gtw in data.gateway_id.split(",")]
+                gateway_names_list = [gtw.strip() for gtw in data.gateway_name.split(",")]
+                gateways_list = [DataCollectorGateway(gateway_id=gateway_id[i],gateway_name=gateway_names_list[i]) for i in len(gateway_ids_list)]
+
             new_data_collector = DataCollector(
                 name=data.name,
                 type=type,
@@ -1989,7 +1996,8 @@ class DataCollectorListAPI(Resource):
                 gateway_name=data.gateway_name,
                 gateway_api_key=cryptedApiKey,
                 region_id=data.region_id,
-                status=DataCollectorStatus.DISCONNECTED
+                status=DataCollectorStatus.DISCONNECTED,
+                gateways_list=gateways_list
             )
             try:
                 new_data_collector.save_to_db()
