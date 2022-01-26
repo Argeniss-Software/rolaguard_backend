@@ -2173,14 +2173,17 @@ class DataCollectorTestAPI(Resource):
         
         # Check if port is valid
 
+        '''
         try:
-            if not (0 < int(data.port, 10) <= 65536):
+            if data.port and not (0 < int(data.port, 10) <= 65536):
                 return bad_request('Port invalid')
         except Exception as exc:
             return bad_request('Port invalid')
+        '''
 
         # Check if URL or IP are valid 
 
+        '''
         if not validators.url(data.ip):
             try:
                 socket.inet_aton(data.ip)
@@ -2191,6 +2194,7 @@ class DataCollectorTestAPI(Resource):
             try:
                 validators.url(data.ip)
             except: return bad_request('URL invalid')
+        '''
 
         if len(data.description) > 1000:
             return bad_request('Description field too long. Max is 1000 characters.')
@@ -2329,7 +2333,7 @@ class DataCollectorTTNAccount(Resource):
         access_token = data_access.json().get('access_token')
         res = ses.get('https://console.thethingsnetwork.org/api/gateways', headers={'Authorization': 'Bearer {}'.format(access_token)}, timeout=30)
 
-        session['user_gateways'] = [{"id":gateway.get('id'), "description":gateway.get('attributes').get('description')} for gateway in res.json()]
+        session['ttn_v2_user_gateways'] = [{"id":gateway.get('id'), "description":gateway.get('attributes').get('description')} for gateway in res.json()]
 
         return jsonify({"message": "Credentials processed successfully"})
 
@@ -2342,13 +2346,57 @@ class DataCollectorUserGateways(Resource):
         if not user or not is_admin_user(user.id) and not is_regular_user(user.id):
             return forbidden()
 
-        user_gateways = session.get('user_gateways')
+        dc_type_parser = reqparse.RequestParser()
+        dc_type_parser.add_argument('dc_type_code',dest='dc_type_code',required=True)
+        data = dc_type_parser.parse_args()
+        dc_type_code = data['dc_type_code']
+
+        user_gateways = []
+        if dc_type_code == 'ttn_collector':
+            user_gateways = session.get('ttn_v2_user_gateways')
+        elif dc_type_code == 'ttn_v3_collector':
+            user_gateways = session.get('ttn_v3_user_gateways')
 
         if not user_gateways:
             return not_found()
 
         return user_gateways
 
+class DataCollectorTTN3Account(Resource):
+    @jwt_required
+    def post(self):
+        user_identity = get_jwt_identity()
+        user = User.find_by_username(user_identity)
+
+        if not user or not is_admin_user(user.id):
+            return forbidden()
+        ttn3_credentials_parser = reqparse.RequestParser()
+        ttn3_credentials_parser.add_argument('gateway_api_key',dest='gateway_api_key',required=True)
+        ttn3_credentials_parser.add_argument('region_id',dest='region_id',required=True,type=int)
+        data = ttn3_credentials_parser.parse_args()
+        ttn3_api_key = data['gateway_api_key']
+        ttn3_region_id = data['region_id'] 
+        LOG.debug(ttn3_api_key)
+        LOG.debug(ttn3_region_id)
+        ses = requests.Session()
+        ses.headers['Content-type'] = 'application/json'
+            
+        url = ''
+        if ttn3_region_id == 1:
+            url = 'https://eu1.cloud.thethings.network/api/v3/gateways'
+        elif ttn3_region_id == 2:
+            url = 'https://nam1.cloud.thethings.network/api/v3/gateways'
+        elif ttn3_region_id == 3:
+            url = 'https://au1.cloud.thethings.network/api/v3/gateways'
+            
+        res = ses.get(url, headers={'Authorization': 'Bearer {}'.format(ttn3_api_key)}, timeout=30)
+
+        gateways_list = []
+        gateways = res.json()['gateways']
+        for gtw in gateways:
+            gateways_list.append({"id":gtw['ids']['gateway_id'], "eui": gtw['ids']['eui']})
+
+        return gateways_list
 
 class DataCollectorTTNRegionsAPI(Resource):
 
@@ -2363,60 +2411,6 @@ class DataCollectorTTNRegionsAPI(Resource):
         regions = TTNRegion.find_all()
 
         return list(map(lambda region: region.to_json(), regions))
-
-
-class DataCollectorTTNAccount(Resource):
-    @jwt_required
-    def post(self):
-        user_identity = get_jwt_identity()
-        user = User.find_by_username(user_identity)
-
-        if not user or not is_admin_user(user.id):
-            return forbidden()
-
-        data = ttn_credentials_parser.parse_args()
-        ttn_user = data["username"]
-        ttn_password = data["password"]
-
-        if not ttn_user or not ttn_password:
-            return bad_request("TTN credentials not provided")
-
-        ses = requests.Session()
-        ses.headers['Content-type'] = 'application/json'
-        res = ses.post('https://account.thethingsnetwork.org/api/v2/users/login', data=json.dumps({"username": ttn_user, "password": ttn_password}))
-        ses.get('https://console.thethingsnetwork.org/login')
-
-        if res.status_code != 200:
-            return internal("Login failed with provided credentials")
-
-        data_access = ses.get('https://console.thethingsnetwork.org/refresh', timeout=30)
-
-        if data_access.status_code != 200:
-            return internal("couldn't get TTN access data")
-
-        access_token = data_access.json().get('access_token')
-        res = ses.get('https://console.thethingsnetwork.org/api/gateways', headers={'Authorization': 'Bearer {}'.format(access_token)}, timeout=30)
-
-        session['user_gateways'] = [{"id":gateway.get('id'), "description":gateway.get('attributes').get('description')} for gateway in res.json()]
-
-        return jsonify({"message": "Credentials processed successfully"})
-
-class DataCollectorUserGateways(Resource):
-    @jwt_required
-    def get(self):
-        user_identity = get_jwt_identity()
-        user = User.find_by_username(user_identity)
-
-        if not user or not is_admin_user(user.id) and not is_regular_user(user.id):
-            return forbidden()
-
-        user_gateways = session.get('user_gateways')
-
-        if not user_gateways:
-            return not_found()
-
-        return user_gateways
-
 
 class DevicesListAPI(Resource):
 
