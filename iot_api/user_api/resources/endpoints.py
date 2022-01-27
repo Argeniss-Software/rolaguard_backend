@@ -5,7 +5,7 @@ import json
 import os
 import re
 import smtplib
-from backend.iot_api.user_api.models import DataCollectorGateway
+from iot_api.user_api.models.DataCollectorGateway import DataCollectorGateway
 import socket
 import uuid
 import validators
@@ -1972,9 +1972,9 @@ class DataCollectorListAPI(Resource):
         try:
             gateways_list = []
             if type.type == TTN_V3_COLLECTOR:
-                gateway_ids_list = [gtw.strip() for gtw in data.gateway_id.split(",")]
-                gateway_names_list = [gtw.strip() for gtw in data.gateway_name.split(",")]
-                gateways_list = [DataCollectorGateway(gateway_id=gateway_id[i],gateway_name=gateway_names_list[i]) for i in len(gateway_ids_list)]
+                gateway_ids = [gtw.strip() for gtw in data.gateway_id.split(",")]
+                gateway_names = [gtw.strip() for gtw in data.gateway_name.split(",")]
+                gateways_list = [DataCollectorGateway(gateway_id=gateway_ids[i],gateway_name=gateway_names[i]) for i in len(gateway_ids)]
 
             new_data_collector = DataCollector(
                 name=data.name,
@@ -2181,28 +2181,30 @@ class DataCollectorTestAPI(Resource):
         
         # Check if port is valid
 
-        '''
+        
         try:
             if data.port and not (0 < int(data.port, 10) <= 65536):
                 return bad_request('Port invalid')
         except Exception as exc:
+            LOG.error(exc)
             return bad_request('Port invalid')
-        '''
+        
 
         # Check if URL or IP are valid 
 
-        '''
+        
         if not validators.url(data.ip):
             try:
                 socket.inet_aton(data.ip)
             except socket.error:
+                LOG.error(socket.error)
                 if not validators.domain(data.ip):
                     return bad_request('IP invalid')
         else:
             try:
                 validators.url(data.ip)
-            except: return bad_request('URL invalid')
-        '''
+            except: 
+                return bad_request('URL invalid')
 
         if len(data.description) > 1000:
             return bad_request('Description field too long. Max is 1000 characters.')
