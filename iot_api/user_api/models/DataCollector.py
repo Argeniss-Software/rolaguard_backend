@@ -46,7 +46,7 @@ class DataCollector(db.Model):
     topics = relationship("MqttTopic", lazy="joined")
     status = Column(SQLEnum(DataCollectorStatus))
     verified = Column(Boolean, nullable=False, default=False)
-    gateways_list = relationship('DataCollectorGateway',lazy='joined')
+    gateways_list = relationship('DataCollectorGateway', cascade = "all, delete, delete-orphan", lazy='joined')
 
     def to_json(self):
         topics = list(map(lambda topic: topic.to_json(), self.topics))
@@ -88,7 +88,7 @@ class DataCollector(db.Model):
             'topics': topics,
             'status': self.status.name,
             'verified': self.verified,
-            'gateways_list': [{'id': gtw.gateway_id, 'name': gtw.gateway_name} for gtw in self.gateways_list]
+            'gateways_list': [{'gateway_id': gtw.gateway_id, 'gateway_name': gtw.gateway_name} for gtw in self.gateways_list]
         }
 
     def to_json_for_system(self):
@@ -126,7 +126,7 @@ class DataCollector(db.Model):
             'topics': topics,
             'status': self.status.name,
             'verified': self.verified,
-            'gateways_list': [{'id': gtw.gateway_id, 'name': gtw.gateway_name} for gtw in self.gateways_list]
+            'gateways_list': [{'gateway_id': gtw.gateway_id, 'gateway_name': gtw.gateway_name} for gtw in self.gateways_list]
         }
 
     def to_json_for_list(self):
@@ -149,7 +149,7 @@ class DataCollector(db.Model):
             'type': self.type.to_json(),
             'status': self.status.name,
             'verified': self.verified,
-            'gateways_list': [{'id': gtw.gateway_id, 'name': gtw.gateway_name} for gtw in self.gateways_list]
+            'gateways_list': [{'gateway_id': gtw.gateway_id, 'gateway_name': gtw.gateway_name} for gtw in self.gateways_list]
         }
 
     def save_to_db(self):
