@@ -2361,38 +2361,32 @@ class DataCollectorUserGateways(Resource):
         if not user or not is_admin_user(user.id) and not is_regular_user(user.id):
             return forbidden()
 
-        dc_type_parser = reqparse.RequestParser()
-        dc_type_parser.add_argument('dc_type_code',dest='dc_type_code',required=True)
-        data = dc_type_parser.parse_args()
-        dc_type_code = data['dc_type_code']
-
-        user_gateways = []
-        if dc_type_code == 'ttn_collector':
-            user_gateways = session.get('ttn_v2_user_gateways')
-        elif dc_type_code == 'ttn_v3_collector':
-            user_gateways = session.get('ttn_v3_user_gateways')
+        user_gateways = session.get('ttn_v2_user_gateways')
 
         if not user_gateways:
             return not_found()
 
         return user_gateways
 
-class DataCollectorTTN3Account(Resource):
+class DataCollectorTTN3Gateways(Resource):
     @jwt_required
-    def post(self):
+    def get(self):
+        '''
+        This function retrieves all the gateways that can be accessed by the api_key and region_id provided.
+        '''
         user_identity = get_jwt_identity()
         user = User.find_by_username(user_identity)
 
         if not user or not is_admin_user(user.id):
             return forbidden()
+        
         ttn3_credentials_parser = reqparse.RequestParser()
         ttn3_credentials_parser.add_argument('gateway_api_key',dest='gateway_api_key',required=True)
         ttn3_credentials_parser.add_argument('region_id',dest='region_id',required=True,type=int)
         data = ttn3_credentials_parser.parse_args()
         ttn3_api_key = data['gateway_api_key']
-        ttn3_region_id = data['region_id'] 
-        LOG.debug(ttn3_api_key)
-        LOG.debug(ttn3_region_id)
+        ttn3_region_id = data['region_id']
+
         ses = requests.Session()
         ses.headers['Content-type'] = 'application/json'
             
