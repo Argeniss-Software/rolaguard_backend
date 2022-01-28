@@ -81,6 +81,7 @@ data_collector_parser.add_argument("gateway_name", help="Missing gateway_name at
 data_collector_parser.add_argument("gateway_api_key", help="Missing gateway_api_key attribute", required=False)
 data_collector_parser.add_argument("region_id", help="Missing region_id attribute", required=False)
 data_collector_parser.add_argument("topics", help="Missing topics attribute", required=False, action="append")
+data_collector_parser.add_argument("custom_ip", required=False)
 
 register_parser = reqparse.RequestParser()
 register_parser.add_argument("username", help="Missing username attribute.", required=True)
@@ -1906,7 +1907,7 @@ class DataCollectorListAPI(Resource):
         data = data_collector_parser.parse_args()
         organization_id = user.organization_id
         gateway_id = data.gateway_id
-
+        custom_ip = data.custom_ip == 'true'
         type_id = data.data_collector_type_id
 
         if not type_id:
@@ -1926,26 +1927,30 @@ class DataCollectorListAPI(Resource):
         #    if data.port or data.ip or data.user or data.password:
         #        return bad_request('Not allowed ip, port, user or password in ttn_v3_collector type')
         
-        # Check if port is valid
+        
 
-        try:
-            if not (0 < int(data.port, 10) <= 65536):
+        if not (type.type == TTN_V3_COLLECTOR and not custom_ip):
+            
+            # Check if port is valid
+            
+            try:
+                if not (0 < int(data.port, 10) <= 65536):
+                    return bad_request('Port invalid')
+            except Exception as exc:
                 return bad_request('Port invalid')
-        except Exception as exc:
-            return bad_request('Port invalid')
 
-        # Check if URL or IP are valid
+            # Check if URL or IP are valid
 
-        if not validators.url(data.ip):
-            try:
-                socket.inet_aton(data.ip)
-            except socket.error:
-                if not validators.domain(data.ip):
-                    return bad_request('IP invalid')
-        else:
-            try:
-                validators.url(data.ip)
-            except: return bad_request('URL invalid')
+            if not validators.url(data.ip):
+                try:
+                    socket.inet_aton(data.ip)
+                except socket.error:
+                    if not validators.domain(data.ip):
+                        return bad_request('IP invalid')
+            else:
+                try:
+                    validators.url(data.ip)
+                except: return bad_request('URL invalid')
 
         if len(data.description) > 1000:
             return bad_request('Description field too long. Max is 1000 characters.')
@@ -1974,7 +1979,7 @@ class DataCollectorListAPI(Resource):
             if type.type == TTN_V3_COLLECTOR:
                 gateway_ids = [gtw.strip() for gtw in data.gateway_id.split(",")]
                 gateway_names = [gtw.strip() for gtw in data.gateway_name.split(",")]
-                gateways_list = [DataCollectorGateway(gateway_id=gateway_ids[i],gateway_name=gateway_names[i]) for i in len(gateway_ids)]
+                gateways_list = [DataCollectorGateway(gateway_id=gateway_ids[i],gateway_name=gateway_names[i]) for i in range(0,len(gateway_ids))]
 
             new_data_collector = DataCollector(
                 name=data.name,
