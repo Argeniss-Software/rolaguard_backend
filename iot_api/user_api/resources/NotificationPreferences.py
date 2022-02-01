@@ -3,6 +3,7 @@ from flask_restful import Resource
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_mail import Message
 import boto3
+import validators
 
 import random
 import string
@@ -180,6 +181,8 @@ class NotificationPreferencesAPI(Resource):
 
                     for webhook in destination.get('additional'):
                         if webhook and not webhook.get('id'):
+                            if not validators.url(webhook.get('url')):
+                                return {'error': 'invalid url.'}, 400
                             encrypted_url_secret = cipher_suite.encrypt(bytes(webhook.get('secret'),'utf-8')).decode('utf-8')
                             Webhook(webhook_user_id=user.id,target_url=webhook.get('url'),url_secret=encrypted_url_secret,active=True).save()
 
